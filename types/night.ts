@@ -4,7 +4,7 @@ export interface NightMember {
   id: string;
   consumer: Consumer;
   role: 'organiser' | 'member';
-  rsvp_status: 'pending' | 'accepted' | 'declined';
+  rsvp_status: 'going' | 'maybe' | 'declined';
   created_at: string;
   updated_at: string;
 }
