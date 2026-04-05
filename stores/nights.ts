@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import api from '@/lib/api';
-import { Night, CreateNightInput, UpdateNightInput } from '@/types/night';
+import { Night, NightMember, CreateNightInput, UpdateNightInput } from '@/types/night';
 
 interface NightsStore {
   nights: Night[];
@@ -12,6 +12,9 @@ interface NightsStore {
   updateNight: (id: string, data: UpdateNightInput) => Promise<Night>;
   deleteNight: (id: string) => Promise<void>;
   clearCurrentNight: () => void;
+  addMember: (nightId: string, consumerId: string) => Promise<NightMember>;
+  updateMemberRsvp: (memberId: string, rsvpStatus: NightMember['rsvp_status']) => Promise<NightMember>;
+  removeMember: (memberId: string) => Promise<void>;
 }
 
 export const useNightsStore = create<NightsStore>((set, get) => ({
@@ -65,4 +68,55 @@ export const useNightsStore = create<NightsStore>((set, get) => ({
   },
 
   clearCurrentNight: () => set({ currentNight: null }),
+
+  addMember: async (nightId, consumerId) => {
+    const { data } = await api.post(`/consumer/nights/${nightId}/members`, {
+      consumer_id: consumerId,
+    });
+    const member = data.member ?? data;
+    set((state) => {
+      if (!state.currentNight || state.currentNight.id !== nightId) return state;
+      return {
+        currentNight: {
+          ...state.currentNight,
+          members: [...state.currentNight.members, member],
+          members_count: state.currentNight.members_count + 1,
+        },
+      };
+    });
+    return member;
+  },
+
+  updateMemberRsvp: async (memberId, rsvpStatus) => {
+    const { data } = await api.put(`/consumer/members/${memberId}`, {
+      rsvp_status: rsvpStatus,
+    });
+    const updated = data.member ?? data;
+    set((state) => {
+      if (!state.currentNight) return state;
+      return {
+        currentNight: {
+          ...state.currentNight,
+          members: state.currentNight.members.map((m) =>
+            m.id === memberId ? updated : m
+          ),
+        },
+      };
+    });
+    return updated;
+  },
+
+  removeMember: async (memberId) => {
+    await api.delete(`/consumer/members/${memberId}`);
+    set((state) => {
+      if (!state.currentNight) return state;
+      return {
+        currentNight: {
+          ...state.currentNight,
+          members: state.currentNight.members.filter((m) => m.id !== memberId),
+          members_count: state.currentNight.members_count - 1,
+        },
+      };
+    });
+  },
 }));
