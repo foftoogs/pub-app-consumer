@@ -1,11 +1,13 @@
 import { create } from 'zustand';
 import api from '@/lib/api';
-import { Night, NightMember, CreateNightInput, UpdateNightInput } from '@/types/night';
+import { Night, NightMember, Venue, Itinerary, CreateNightInput, UpdateNightInput, AddItineraryInput } from '@/types/night';
 
 interface NightsStore {
   nights: Night[];
   currentNight: Night | null;
   loading: boolean;
+  venues: Venue[];
+  venuesLoading: boolean;
   fetchNights: () => Promise<void>;
   fetchNight: (id: string) => Promise<void>;
   createNight: (data: CreateNightInput) => Promise<Night>;
@@ -15,12 +17,18 @@ interface NightsStore {
   addMember: (nightId: string, consumerId: string) => Promise<NightMember>;
   updateMemberRsvp: (memberId: string, rsvpStatus: NightMember['rsvp_status']) => Promise<NightMember>;
   removeMember: (memberId: string) => Promise<void>;
+  fetchVenues: (search?: string) => Promise<void>;
+  addItineraryItem: (nightId: string, input: AddItineraryInput) => Promise<Itinerary>;
+  reorderItinerary: (nightId: string, itemIds: string[]) => Promise<void>;
+  removeItineraryItem: (nightId: string, itemId: string) => Promise<void>;
 }
 
 export const useNightsStore = create<NightsStore>((set, get) => ({
   nights: [],
   currentNight: null,
   loading: false,
+  venues: [],
+  venuesLoading: false,
 
   fetchNights: async () => {
     set({ loading: true });
@@ -115,6 +123,62 @@ export const useNightsStore = create<NightsStore>((set, get) => ({
           ...state.currentNight,
           members: state.currentNight.members.filter((m) => m.id !== memberId),
           members_count: state.currentNight.members_count - 1,
+        },
+      };
+    });
+  },
+
+  fetchVenues: async (search) => {
+    set({ venuesLoading: true });
+    try {
+      const params: Record<string, string> = {};
+      if (search) params.search = search;
+      const { data } = await api.get('/consumer/venues', { params });
+      set({ venues: data.data ?? data.venues ?? data });
+    } finally {
+      set({ venuesLoading: false });
+    }
+  },
+
+  addItineraryItem: async (nightId, input) => {
+    const { data } = await api.post(`/consumer/nights/${nightId}/itinerary`, input);
+    const item = data.itinerary ?? data;
+    set((state) => {
+      if (!state.currentNight || state.currentNight.id !== nightId) return state;
+      return {
+        currentNight: {
+          ...state.currentNight,
+          itinerary: [...state.currentNight.itinerary, item],
+          itinerary_count: state.currentNight.itinerary_count + 1,
+        },
+      };
+    });
+    return item;
+  },
+
+  reorderItinerary: async (nightId, itemIds) => {
+    const { data } = await api.put(`/consumer/nights/${nightId}/itinerary`, { items: itemIds });
+    const items = data.itinerary ?? data;
+    set((state) => {
+      if (!state.currentNight || state.currentNight.id !== nightId) return state;
+      return {
+        currentNight: {
+          ...state.currentNight,
+          itinerary: items,
+        },
+      };
+    });
+  },
+
+  removeItineraryItem: async (nightId, itemId) => {
+    await api.delete(`/consumer/nights/${nightId}/itinerary/${itemId}`);
+    set((state) => {
+      if (!state.currentNight || state.currentNight.id !== nightId) return state;
+      return {
+        currentNight: {
+          ...state.currentNight,
+          itinerary: state.currentNight.itinerary.filter((i) => i.id !== itemId),
+          itinerary_count: state.currentNight.itinerary_count - 1,
         },
       };
     });

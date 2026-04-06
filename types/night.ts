@@ -9,16 +9,35 @@ export interface NightMember {
   updated_at: string;
 }
 
+export interface Venue {
+  id: string;
+  name: string;
+  address: string | null;
+  suburb: string | null;
+  state: string | null;
+  postcode: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  phone: string | null;
+  email: string | null;
+  description: string | null;
+  is_active: boolean;
+}
+
 export interface Itinerary {
   id: string;
-  venue_id: string;
-  venue_name: string;
-  venue_suburb: string;
-  position: number;
-  arrival_time: string | null;
-  departure_time: string | null;
+  venue: Venue;
+  order: number;
+  estimated_arrival: string | null;
+  estimated_departure: string | null;
   created_at: string;
   updated_at: string;
+}
+
+export interface AddItineraryInput {
+  venue_id: string;
+  estimated_arrival?: string;
+  estimated_departure?: string;
 }
 
 export interface NightInvite {
