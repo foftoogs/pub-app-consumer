@@ -1,8 +1,45 @@
-# Welcome to your Expo app 👋
+# pub-app-consumer
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Consumer-facing mobile app for planning nights out. Built with React Native and Expo.
 
-## Get started
+## Tech Stack
+
+- **Framework:** [Expo](https://expo.dev) (SDK 54) with [Expo Router](https://docs.expo.dev/router/introduction/) (file-based routing)
+- **Language:** TypeScript
+- **State Management:** [Zustand](https://github.com/pmndrs/zustand)
+- **HTTP Client:** Axios
+- **Auth:** Token-based authentication with Expo SecureStore
+- **Testing:** Jest + React Native Testing Library
+
+## Project Structure
+
+```
+app/
+  (auth)/          # Login and verification screens
+    login.tsx
+    verify.tsx
+  (app)/           # Authenticated screens
+    nights/
+      index.tsx    # Night list
+      create.tsx   # Create a night
+      [id]/        # Night detail (tab layout)
+        index.tsx  # Overview
+        members.tsx
+        itinerary.tsx
+        invite.tsx
+components/        # Reusable UI components
+lib/
+  api.ts           # Axios API client
+stores/
+  auth.ts          # Auth state (Zustand)
+  nights.ts        # Nights state (Zustand)
+types/
+  consumer.ts      # Consumer/user types
+  night.ts         # Night types
+__tests__/         # Unit and component tests
+```
+
+## Getting Started
 
 1. Install dependencies
 
@@ -10,41 +47,21 @@ This is an [Expo](https://expo.dev) project created with [`create-expo-app`](htt
    npm install
    ```
 
-2. Start the app
+2. Start the dev server
 
    ```bash
    npx expo start
    ```
 
-In the output, you'll find options to open the app in a
+3. Open the app in a [development build](https://docs.expo.dev/develop/development-builds/introduction/), [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/), [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/), or [Expo Go](https://expo.dev/go).
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+## Scripts
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
-```
-
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
-
-## Learn more
-
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+| Command | Description |
+|---------|-------------|
+| `npm start` | Start Expo dev server |
+| `npm run android` | Start on Android |
+| `npm run ios` | Start on iOS |
+| `npm run web` | Start on web |
+| `npm run lint` | Run ESLint |
+| `npm test` | Run Jest tests |
