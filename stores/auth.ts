@@ -7,6 +7,8 @@ interface AuthStore {
   consumer: Consumer | null;
   token: string | null;
   isReady: boolean;
+  pendingInviteCode: string | null;
+  setPendingInviteCode: (code: string | null) => void;
   setAuth: (consumer: Consumer, token: string) => void;
   clearAuth: () => void;
   hydrate: () => Promise<void>;
@@ -17,6 +19,9 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   consumer: null,
   token: null,
   isReady: false,
+  pendingInviteCode: null,
+
+  setPendingInviteCode: (code) => set({ pendingInviteCode: code }),
 
   setAuth: async (consumer, token) => {
     await SecureStore.setItemAsync('consumer_token', token);
