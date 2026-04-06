@@ -42,10 +42,13 @@ export interface AddItineraryInput {
 
 export interface NightInvite {
   id: string;
-  code: string;
+  invite_code: string;
+  invited_by: Consumer;
+  accepted_by: Consumer | null;
+  status: 'pending' | 'used' | 'expired';
+  accepted_at: string | null;
   expires_at: string | null;
   created_at: string;
-  updated_at: string;
 }
 
 export interface Night {

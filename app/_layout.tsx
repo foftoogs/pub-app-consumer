@@ -24,8 +24,9 @@ export default function RootLayout() {
     if (!isReady) return;
 
     const inAuthGroup = segments[0] === '(auth)';
+    const inInvite = segments[0] === 'invite';
 
-    if (!token && !inAuthGroup) {
+    if (!token && !inAuthGroup && !inInvite) {
       router.replace('/(auth)/login');
     } else if (token && inAuthGroup) {
       router.replace('/(app)/nights');
@@ -45,6 +46,7 @@ export default function RootLayout() {
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="(auth)" />
         <Stack.Screen name="(app)" />
+        <Stack.Screen name="invite" />
       </Stack>
       <StatusBar style="auto" />
     </ThemeProvider>

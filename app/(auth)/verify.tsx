@@ -12,6 +12,7 @@ import {
 import { router, useLocalSearchParams } from 'expo-router';
 import api from '@/lib/api';
 import { useAuthStore } from '@/stores/auth';
+import { useNightsStore } from '@/stores/nights';
 
 export default function VerifyScreen() {
   const { email } = useLocalSearchParams<{ email: string }>();
@@ -19,6 +20,9 @@ export default function VerifyScreen() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const setAuth = useAuthStore((s) => s.setAuth);
+  const pendingInviteCode = useAuthStore((s) => s.pendingInviteCode);
+  const setPendingInviteCode = useAuthStore((s) => s.setPendingInviteCode);
+  const acceptInvite = useNightsStore((s) => s.acceptInvite);
 
   const handleVerify = async () => {
     setError('');
@@ -29,6 +33,18 @@ export default function VerifyScreen() {
         code,
       });
       await setAuth(data.consumer, data.token);
+
+      if (pendingInviteCode) {
+        try {
+          const nightId = await acceptInvite(pendingInviteCode);
+          setPendingInviteCode(null);
+          router.replace(`/(app)/nights/${nightId}`);
+          return;
+        } catch {
+          setPendingInviteCode(null);
+        }
+      }
+
       router.replace('/(app)/nights');
     } catch (err: any) {
       setError(err.response?.data?.message ?? 'Invalid or expired code');

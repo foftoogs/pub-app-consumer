@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import api from '@/lib/api';
-import { Night, NightMember, Venue, Itinerary, CreateNightInput, UpdateNightInput, AddItineraryInput } from '@/types/night';
+import { Night, NightMember, NightInvite, Venue, Itinerary, CreateNightInput, UpdateNightInput, AddItineraryInput } from '@/types/night';
 
 interface NightsStore {
   nights: Night[];
@@ -21,6 +21,8 @@ interface NightsStore {
   addItineraryItem: (nightId: string, input: AddItineraryInput) => Promise<Itinerary>;
   reorderItinerary: (nightId: string, itemIds: string[]) => Promise<void>;
   removeItineraryItem: (nightId: string, itemId: string) => Promise<void>;
+  generateInvite: (nightId: string) => Promise<NightInvite>;
+  acceptInvite: (code: string) => Promise<string>;
 }
 
 export const useNightsStore = create<NightsStore>((set, get) => ({
@@ -182,5 +184,25 @@ export const useNightsStore = create<NightsStore>((set, get) => ({
         },
       };
     });
+  },
+
+  generateInvite: async (nightId) => {
+    const { data } = await api.post(`/consumer/nights/${nightId}/invites`);
+    const invite = data.invite ?? data;
+    set((state) => {
+      if (!state.currentNight || state.currentNight.id !== nightId) return state;
+      return {
+        currentNight: {
+          ...state.currentNight,
+          invites: [invite, ...state.currentNight.invites],
+        },
+      };
+    });
+    return invite;
+  },
+
+  acceptInvite: async (code) => {
+    const { data } = await api.post(`/consumer/invites/${code}/accept`);
+    return data.night_id;
   },
 }));

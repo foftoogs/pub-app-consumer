@@ -89,6 +89,7 @@ const mockVenue2 = {
   ...mockVenue,
   id: 'venue-2',
   name: 'Cocktail Lounge',
+  address: '45 Brunswick St',
   suburb: 'Fitzroy',
 };
 
@@ -156,10 +157,10 @@ describe('ItineraryScreen', () => {
     expect(getByText('Fitzroy')).toBeTruthy();
   });
 
-  it('shows arrival and departure times', () => {
+  it('shows arrival and departure times in chips', () => {
     const { getByText } = render(<ItineraryScreen />);
-    expect(getByText('Arrive: 18:00')).toBeTruthy();
-    expect(getByText('Depart: 20:00')).toBeTruthy();
+    expect(getByText('18:00')).toBeTruthy();
+    expect(getByText('20:00')).toBeTruthy();
   });
 
   it('shows "No times set" when no times provided', () => {
@@ -167,7 +168,13 @@ describe('ItineraryScreen', () => {
     expect(getByText('No times set')).toBeTruthy();
   });
 
-  it('shows empty state when no itinerary items', () => {
+  it('shows venue address when available', () => {
+    const { getByText } = render(<ItineraryScreen />);
+    expect(getByText('123 Main St')).toBeTruthy();
+  });
+
+  it('shows empty state when no itinerary items and not organiser', () => {
+    useAuthStore.setState({ consumer: memberConsumer });
     useNightsStore.setState({
       currentNight: { ...mockNight, itinerary: [], itinerary_count: 0 },
     });
@@ -175,34 +182,59 @@ describe('ItineraryScreen', () => {
     expect(getByText('No venues added yet')).toBeTruthy();
   });
 
-  it('shows add venue button for organiser in planning status', () => {
+  it('shows empty slot placeholders for organiser', () => {
     const { getByText } = render(<ItineraryScreen />);
-    expect(getByText('+ Add Venue')).toBeTruthy();
+    // 2 filled + 1 empty slot = stop badge "3" on the empty slot
+    expect(getByText('3')).toBeTruthy();
+    expect(getByText('+ Add venue')).toBeTruthy();
   });
 
-  it('hides add venue button for non-organiser', () => {
-    useAuthStore.setState({ consumer: memberConsumer });
+  it('shows 3 empty slots when itinerary is empty for organiser', () => {
+    useNightsStore.setState({
+      currentNight: { ...mockNight, itinerary: [], itinerary_count: 0 },
+    });
+    const { getAllByText } = render(<ItineraryScreen />);
+    expect(getAllByText('+ Add venue')).toHaveLength(3);
+  });
+
+  it('hides empty slots when at 3-venue limit', () => {
+    const thirdItem = {
+      ...mockItineraryItem,
+      id: 'itin-3',
+      venue: { ...mockVenue, id: 'venue-3', name: 'Third Bar' },
+      order: 3,
+    };
+    useNightsStore.setState({
+      currentNight: {
+        ...mockNight,
+        itinerary: [mockItineraryItem, mockItineraryItem2, thirdItem],
+        itinerary_count: 3,
+      },
+    });
     const { queryByText } = render(<ItineraryScreen />);
-    expect(queryByText('+ Add Venue')).toBeNull();
+    expect(queryByText('+ Add venue')).toBeNull();
   });
 
-  it('hides add venue button when night is not planning', () => {
+  it('hides empty slots and controls for non-organiser', () => {
+    useAuthStore.setState({ consumer: memberConsumer });
+    const { queryByText, queryAllByText } = render(<ItineraryScreen />);
+    expect(queryByText('+ Add venue')).toBeNull();
+    expect(queryAllByText('x')).toHaveLength(0);
+    expect(queryByText('Move up')).toBeNull();
+  });
+
+  it('hides controls when night is not planning', () => {
     useNightsStore.setState({
       currentNight: { ...mockNight, status: 'active' },
     });
-    const { queryByText } = render(<ItineraryScreen />);
-    expect(queryByText('+ Add Venue')).toBeNull();
+    const { queryByText, queryAllByText } = render(<ItineraryScreen />);
+    expect(queryByText('+ Add venue')).toBeNull();
+    expect(queryAllByText('x')).toHaveLength(0);
   });
 
   it('shows remove buttons for organiser in planning', () => {
     const { getAllByText } = render(<ItineraryScreen />);
     expect(getAllByText('x')).toHaveLength(2);
-  });
-
-  it('hides remove buttons for non-organiser', () => {
-    useAuthStore.setState({ consumer: memberConsumer });
-    const { queryAllByText } = render(<ItineraryScreen />);
-    expect(queryAllByText('x')).toHaveLength(0);
   });
 
   it('shows confirmation dialog on remove press', () => {
@@ -216,10 +248,22 @@ describe('ItineraryScreen', () => {
     );
   });
 
-  it('opens venue picker modal on add button press', () => {
-    (mockApi.get as jest.Mock).mockResolvedValueOnce({ data: { data: [mockVenue, mockVenue2] } });
+  it('shows drag handles for organiser in planning', () => {
+    const { getAllByText } = render(<ItineraryScreen />);
+    const handles = getAllByText('☰');
+    expect(handles).toHaveLength(2);
+  });
+
+  it('hides drag handles for non-organiser', () => {
+    useAuthStore.setState({ consumer: memberConsumer });
+    const { queryAllByText } = render(<ItineraryScreen />);
+    expect(queryAllByText('☰')).toHaveLength(0);
+  });
+
+  it('opens venue picker modal on empty slot press', () => {
+    (mockApi.get as jest.Mock).mockResolvedValueOnce({ data: { data: [] } });
     const { getByText, getByPlaceholderText } = render(<ItineraryScreen />);
-    fireEvent.press(getByText('+ Add Venue'));
+    fireEvent.press(getByText('+ Add venue'));
     expect(getByPlaceholderText('Search venues...')).toBeTruthy();
     expect(getByText('Add Venue')).toBeTruthy();
   });
@@ -235,20 +279,18 @@ describe('ItineraryScreen', () => {
       updated_at: '',
     };
 
-    // First call for fetchVenues on modal open
     (mockApi.get as jest.Mock).mockResolvedValueOnce({
       data: { data: [{ ...mockVenue, id: 'venue-3', name: 'New Bar', suburb: 'CBD' }] },
     });
     (mockApi.post as jest.Mock).mockResolvedValueOnce({ data: { itinerary: newItem } });
 
-    // Set venues to include an unselected venue
     useNightsStore.setState({
       ...useNightsStore.getState(),
       venues: [{ ...mockVenue, id: 'venue-3', name: 'New Bar', suburb: 'CBD' }],
     });
 
     const { getByText } = render(<ItineraryScreen />);
-    fireEvent.press(getByText('+ Add Venue'));
+    fireEvent.press(getByText('+ Add venue'));
 
     await waitFor(() => {
       expect(getByText('New Bar')).toBeTruthy();
