@@ -1,11 +1,15 @@
 import { useEffect } from 'react';
-import { ActivityIndicator, View } from 'react-native';
+import { ActivityIndicator, View, Text } from 'react-native';
 import { Tabs, useLocalSearchParams } from 'expo-router';
 import { useNightsStore } from '@/stores/nights';
+import { Colors } from '@/constants/theme';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 
 export default function NightDetailLayout() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { currentNight, loading, fetchNight } = useNightsStore();
+  const { currentNight, loading, error, fetchNight } = useNightsStore();
+  const colorScheme = useColorScheme() ?? 'light';
+  const colors = Colors[colorScheme];
 
   useEffect(() => {
     if (id) fetchNight(id);
@@ -19,12 +23,20 @@ export default function NightDetailLayout() {
     );
   }
 
+  if (error && !currentNight) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24 }}>
+        <Text style={{ color: '#dc2626', fontSize: 16, textAlign: 'center' }}>{error}</Text>
+      </View>
+    );
+  }
+
   return (
     <Tabs
       screenOptions={{
-        tabBarStyle: { backgroundColor: '#fff' },
-        tabBarActiveTintColor: '#000',
-        tabBarInactiveTintColor: '#999',
+        tabBarStyle: { backgroundColor: colors.background },
+        tabBarActiveTintColor: colors.tint,
+        tabBarInactiveTintColor: colors.tabIconDefault,
         headerShown: false,
       }}
     >

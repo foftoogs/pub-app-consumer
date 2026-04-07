@@ -23,7 +23,7 @@ function isUpcoming(night: Night) {
 }
 
 export default function NightListScreen() {
-  const { nights, loading, fetchNights } = useNightsStore();
+  const { nights, loading, error, fetchNights } = useNightsStore();
   const [tab, setTab] = useState<'upcoming' | 'past'>('upcoming');
 
   useEffect(() => {
@@ -79,6 +79,12 @@ export default function NightListScreen() {
           </Text>
         </TouchableOpacity>
       </View>
+
+      {error ? (
+        <View style={styles.errorBanner}>
+          <Text style={styles.errorText}>{error}</Text>
+        </View>
+      ) : null}
 
       <FlatList
         data={filtered}
@@ -196,6 +202,18 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#bbb',
     marginTop: 8,
+  },
+  errorBanner: {
+    backgroundColor: '#fef2f2',
+    borderBottomWidth: 1,
+    borderBottomColor: '#fecaca',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+  },
+  errorText: {
+    color: '#dc2626',
+    fontSize: 14,
+    textAlign: 'center',
   },
   fab: {
     position: 'absolute',

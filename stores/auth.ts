@@ -7,10 +7,11 @@ interface AuthStore {
   consumer: Consumer | null;
   token: string | null;
   isReady: boolean;
+  error: string | null;
   pendingInviteCode: string | null;
   setPendingInviteCode: (code: string | null) => void;
-  setAuth: (consumer: Consumer, token: string) => void;
-  clearAuth: () => void;
+  setAuth: (consumer: Consumer, token: string) => Promise<void>;
+  clearAuth: () => Promise<void>;
   hydrate: () => Promise<void>;
   logout: () => Promise<void>;
 }
@@ -19,6 +20,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   consumer: null,
   token: null,
   isReady: false,
+  error: null,
   pendingInviteCode: null,
 
   setPendingInviteCode: (code) => set({ pendingInviteCode: code }),
@@ -38,10 +40,10 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
     if (token) {
       try {
         const { data } = await api.get('/consumer/me');
-        set({ token, consumer: data.consumer, isReady: true });
+        set({ token, consumer: data.consumer, isReady: true, error: null });
       } catch {
         await SecureStore.deleteItemAsync('consumer_token');
-        set({ token: null, consumer: null, isReady: true });
+        set({ token: null, consumer: null, isReady: true, error: 'Session expired. Please log in again.' });
       }
     } else {
       set({ isReady: true });
