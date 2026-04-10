@@ -6,6 +6,7 @@ interface NightsStore {
   nights: Night[];
   currentNight: Night | null;
   loading: boolean;
+  error: string | null;
   venues: Venue[];
   venuesLoading: boolean;
   fetchNights: () => Promise<void>;
@@ -29,24 +30,29 @@ export const useNightsStore = create<NightsStore>((set, get) => ({
   nights: [],
   currentNight: null,
   loading: false,
+  error: null,
   venues: [],
   venuesLoading: false,
 
   fetchNights: async () => {
-    set({ loading: true });
+    set({ loading: true, error: null });
     try {
       const { data } = await api.get('/consumer/nights');
       set({ nights: data.data ?? data.nights ?? data });
+    } catch (err: any) {
+      set({ error: err.response?.data?.message ?? 'Failed to load nights' });
     } finally {
       set({ loading: false });
     }
   },
 
   fetchNight: async (id) => {
-    set({ loading: true });
+    set({ loading: true, error: null });
     try {
       const { data } = await api.get(`/consumer/nights/${id}`);
       set({ currentNight: data.night ?? data });
+    } catch (err: any) {
+      set({ error: err.response?.data?.message ?? 'Failed to load night' });
     } finally {
       set({ loading: false });
     }
@@ -131,12 +137,14 @@ export const useNightsStore = create<NightsStore>((set, get) => ({
   },
 
   fetchVenues: async (search) => {
-    set({ venuesLoading: true });
+    set({ venuesLoading: true, error: null });
     try {
       const params: Record<string, string> = {};
       if (search) params.search = search;
       const { data } = await api.get('/consumer/venues', { params });
       set({ venues: data.data ?? data.venues ?? data });
+    } catch (err: any) {
+      set({ error: err.response?.data?.message ?? 'Failed to load venues' });
     } finally {
       set({ venuesLoading: false });
     }
