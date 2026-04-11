@@ -2,11 +2,12 @@ import { useEffect, useMemo } from 'react';
 import { DarkTheme, DefaultTheme, ThemeProvider, type Theme } from '@react-navigation/native';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { ActivityIndicator, View } from 'react-native';
+import { ActivityIndicator, Pressable, View } from 'react-native';
 import 'react-native-reanimated';
 
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useInactivityTimeout } from '@/hooks/use-inactivity-timeout';
 import { useAuthStore } from '@/stores/auth';
 
 function buildNavigationTheme(scheme: 'light' | 'dark'): Theme {
@@ -35,6 +36,7 @@ export default function RootLayout() {
   const isReady = useAuthStore((s) => s.isReady);
   const hydrate = useAuthStore((s) => s.hydrate);
 
+  const resetInactivityTimer = useInactivityTimeout();
   const navigationTheme = useMemo(() => buildNavigationTheme(colorScheme), [colorScheme]);
   const palette = Colors[colorScheme];
 
@@ -72,13 +74,15 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider value={navigationTheme}>
-      <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="index" />
-        <Stack.Screen name="(auth)" />
-        <Stack.Screen name="(app)" />
-        <Stack.Screen name="invite" />
-      </Stack>
-      <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
+      <Pressable style={{ flex: 1 }} onPressIn={resetInactivityTimer}>
+        <Stack screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="index" />
+          <Stack.Screen name="(auth)" />
+          <Stack.Screen name="(app)" />
+          <Stack.Screen name="invite" />
+        </Stack>
+        <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
+      </Pressable>
     </ThemeProvider>
   );
 }
