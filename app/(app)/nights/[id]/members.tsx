@@ -1,25 +1,33 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
-  View,
-  Text,
-  FlatList,
-  TouchableOpacity,
-  TextInput,
-  StyleSheet,
   Alert,
-  ActivityIndicator,
+  FlatList,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
 } from 'react-native';
-import { useNightsStore } from '@/stores/nights';
+
+import { Button } from '@/components/ui/button';
+import { TextField } from '@/components/ui/text-field';
+import { Radius, Spacing, Typography, type ThemeColors } from '@/constants/theme';
+import { useThemeColors } from '@/hooks/use-theme-colors';
 import { useAuthStore } from '@/stores/auth';
+import { useNightsStore } from '@/stores/nights';
 import { NightMember } from '@/types/night';
 
-const RSVP_COLORS: Record<NightMember['rsvp_status'], string> = {
-  going: '#22c55e',
-  maybe: '#f59e0b',
-  declined: '#ef4444',
-};
-
 const RSVP_OPTIONS: NightMember['rsvp_status'][] = ['going', 'maybe', 'declined'];
+
+function rsvpColor(colors: ThemeColors, status: NightMember['rsvp_status']) {
+  switch (status) {
+    case 'going':
+      return colors.success;
+    case 'maybe':
+      return colors.warning;
+    case 'declined':
+      return colors.error;
+  }
+}
 
 function getInitials(name: string) {
   return name
@@ -31,6 +39,8 @@ function getInitials(name: string) {
 }
 
 export default function MembersScreen() {
+  const colors = useThemeColors();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const night = useNightsStore((s) => s.currentNight);
   const addMember = useNightsStore((s) => s.addMember);
   const updateMemberRsvp = useNightsStore((s) => s.updateMemberRsvp);
@@ -95,42 +105,35 @@ export default function MembersScreen() {
 
         {isOrganiser ? (
           <View style={styles.rsvpRow}>
-            {RSVP_OPTIONS.map((status) => (
-              <TouchableOpacity
-                key={status}
-                style={[
-                  styles.rsvpOption,
-                  item.rsvp_status === status && {
-                    backgroundColor: RSVP_COLORS[status],
-                  },
-                ]}
-                onPress={() => handleRsvpChange(item, status)}
-              >
-                <Text
+            {RSVP_OPTIONS.map((status) => {
+              const active = item.rsvp_status === status;
+              return (
+                <Pressable
+                  key={status}
                   style={[
-                    styles.rsvpOptionText,
-                    item.rsvp_status === status && styles.rsvpOptionTextActive,
+                    styles.rsvpOption,
+                    active && { backgroundColor: rsvpColor(colors, status), borderColor: rsvpColor(colors, status) },
                   ]}
+                  onPress={() => handleRsvpChange(item, status)}
                 >
-                  {status}
-                </Text>
-              </TouchableOpacity>
-            ))}
+                  <Text style={[styles.rsvpOptionText, active && styles.rsvpOptionTextActive]}>
+                    {status}
+                  </Text>
+                </Pressable>
+              );
+            })}
           </View>
         ) : (
-          <View style={[styles.rsvpChip, { backgroundColor: RSVP_COLORS[item.rsvp_status] }]}>
+          <View style={[styles.rsvpChip, { backgroundColor: rsvpColor(colors, item.rsvp_status) }]}>
             <Text style={styles.rsvpChipText}>{item.rsvp_status}</Text>
           </View>
         )}
       </View>
 
       {isOrganiser && item.role !== 'organiser' && (
-        <TouchableOpacity
-          style={styles.removeButton}
-          onPress={() => handleRemove(item)}
-        >
-          <Text style={styles.removeButtonText}>x</Text>
-        </TouchableOpacity>
+        <Pressable style={styles.removeButton} onPress={() => handleRemove(item)}>
+          <Text style={styles.removeButtonText}>×</Text>
+        </Pressable>
       )}
     </View>
   );
@@ -153,46 +156,36 @@ export default function MembersScreen() {
         <View style={styles.addSection}>
           {showAddInput ? (
             <View>
-              <TextInput
-                style={styles.addInput}
+              <TextField
                 placeholder="Consumer ID"
-                placeholderTextColor="#999"
                 value={consumerId}
                 onChangeText={setConsumerId}
                 autoFocus
+                error={addError || undefined}
+                containerStyle={styles.addField}
               />
-              {addError ? <Text style={styles.addError}>{addError}</Text> : null}
               <View style={styles.addButtons}>
-                <TouchableOpacity
-                  style={styles.cancelButton}
+                <Button
+                  label="Cancel"
+                  variant="outline"
                   onPress={() => {
                     setShowAddInput(false);
                     setConsumerId('');
                     setAddError('');
                   }}
-                >
-                  <Text style={styles.cancelButtonText}>Cancel</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.addConfirmButton, (!consumerId.trim() || addLoading) && styles.buttonDisabled]}
+                  style={styles.flexButton}
+                />
+                <Button
+                  label="Add"
                   onPress={handleAddMember}
-                  disabled={!consumerId.trim() || addLoading}
-                >
-                  {addLoading ? (
-                    <ActivityIndicator color="#fff" size="small" />
-                  ) : (
-                    <Text style={styles.addConfirmText}>Add</Text>
-                  )}
-                </TouchableOpacity>
+                  disabled={!consumerId.trim()}
+                  loading={addLoading}
+                  style={styles.flexButton}
+                />
               </View>
             </View>
           ) : (
-            <TouchableOpacity
-              style={styles.addButton}
-              onPress={() => setShowAddInput(true)}
-            >
-              <Text style={styles.addButtonText}>+ Add Member</Text>
-            </TouchableOpacity>
+            <Button label="+ Add Member" onPress={() => setShowAddInput(true)} fullWidth />
           )}
         </View>
       )}
@@ -200,172 +193,128 @@ export default function MembersScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
-  list: {
-    padding: 16,
-  },
-  memberRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
-  },
-  avatar: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: '#e0e0e0',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  avatarText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#666',
-  },
-  memberInfo: {
-    flex: 1,
-  },
-  nameRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  memberName: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  memberEmail: {
-    fontSize: 13,
-    color: '#999',
-    marginTop: 2,
-  },
-  roleBadge: {
-    backgroundColor: '#f0f0f0',
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 6,
-  },
-  roleBadgeText: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#666',
-  },
-  rsvpRow: {
-    flexDirection: 'row',
-    gap: 6,
-    marginTop: 8,
-  },
-  rsvpOption: {
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#ddd',
-  },
-  rsvpOptionText: {
-    fontSize: 12,
-    color: '#666',
-    textTransform: 'capitalize',
-  },
-  rsvpOptionTextActive: {
-    color: '#fff',
-    fontWeight: '600',
-  },
-  rsvpChip: {
-    alignSelf: 'flex-start',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-    marginTop: 8,
-  },
-  rsvpChipText: {
-    color: '#fff',
-    fontSize: 12,
-    fontWeight: '600',
-    textTransform: 'capitalize',
-  },
-  removeButton: {
-    padding: 8,
-    marginLeft: 8,
-  },
-  removeButtonText: {
-    fontSize: 18,
-    color: '#ccc',
-    fontWeight: '600',
-  },
-  empty: {
-    paddingTop: 60,
-    alignItems: 'center',
-  },
-  emptyText: {
-    fontSize: 16,
-    color: '#999',
-  },
-  addSection: {
-    padding: 16,
-    borderTopWidth: 1,
-    borderTopColor: '#eee',
-  },
-  addButton: {
-    backgroundColor: '#000',
-    borderRadius: 12,
-    padding: 14,
-    alignItems: 'center',
-  },
-  addButtonText: {
-    color: '#fff',
-    fontSize: 15,
-    fontWeight: '600',
-  },
-  addInput: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 12,
-    padding: 14,
-    fontSize: 15,
-    marginBottom: 8,
-  },
-  addError: {
-    color: '#e74c3c',
-    fontSize: 13,
-    marginBottom: 8,
-  },
-  addButtons: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  cancelButton: {
-    flex: 1,
-    padding: 14,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#ddd',
-    alignItems: 'center',
-  },
-  cancelButtonText: {
-    fontSize: 15,
-    color: '#666',
-  },
-  addConfirmButton: {
-    flex: 1,
-    backgroundColor: '#000',
-    borderRadius: 12,
-    padding: 14,
-    alignItems: 'center',
-  },
-  buttonDisabled: {
-    opacity: 0.5,
-  },
-  addConfirmText: {
-    color: '#fff',
-    fontSize: 15,
-    fontWeight: '600',
-  },
-});
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    list: {
+      padding: Spacing.base,
+    },
+    memberRow: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      paddingVertical: Spacing.md,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+    },
+    avatar: {
+      width: 44,
+      height: 44,
+      borderRadius: Radius.pill,
+      backgroundColor: colors.surfaceAlt,
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginRight: Spacing.md,
+    },
+    avatarText: {
+      ...Typography.bodySemibold,
+      color: colors.primary,
+    },
+    memberInfo: {
+      flex: 1,
+    },
+    nameRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: Spacing.sm,
+    },
+    memberName: {
+      ...Typography.bodySemibold,
+      color: colors.text,
+    },
+    memberEmail: {
+      ...Typography.caption,
+      color: colors.textMuted,
+      marginTop: 2,
+    },
+    roleBadge: {
+      backgroundColor: colors.surfaceAlt,
+      paddingHorizontal: Spacing.sm,
+      paddingVertical: 2,
+      borderRadius: Radius.xs,
+    },
+    roleBadgeText: {
+      ...Typography.label,
+      color: colors.primary,
+      letterSpacing: 0.2,
+    },
+    rsvpRow: {
+      flexDirection: 'row',
+      gap: Spacing.xs,
+      marginTop: Spacing.sm,
+    },
+    rsvpOption: {
+      paddingHorizontal: Spacing.md,
+      paddingVertical: Spacing.xs,
+      borderRadius: Radius.md,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    rsvpOptionText: {
+      ...Typography.caption,
+      color: colors.textSecondary,
+      textTransform: 'capitalize',
+    },
+    rsvpOptionTextActive: {
+      color: colors.textOnPrimary,
+      fontWeight: '600',
+    },
+    rsvpChip: {
+      alignSelf: 'flex-start',
+      paddingHorizontal: Spacing.md,
+      paddingVertical: Spacing.xs,
+      borderRadius: Radius.md,
+      marginTop: Spacing.sm,
+    },
+    rsvpChipText: {
+      ...Typography.label,
+      color: colors.textOnPrimary,
+      textTransform: 'capitalize',
+      letterSpacing: 0,
+    },
+    removeButton: {
+      padding: Spacing.sm,
+      marginLeft: Spacing.sm,
+    },
+    removeButtonText: {
+      fontSize: 20,
+      color: colors.textMuted,
+      fontWeight: '600',
+    },
+    empty: {
+      paddingTop: Spacing['4xl'],
+      alignItems: 'center',
+    },
+    emptyText: {
+      ...Typography.body,
+      color: colors.textMuted,
+    },
+    addSection: {
+      padding: Spacing.base,
+      borderTopWidth: 1,
+      borderTopColor: colors.border,
+    },
+    addField: {
+      marginBottom: Spacing.sm,
+    },
+    addButtons: {
+      flexDirection: 'row',
+      gap: Spacing.sm,
+    },
+    flexButton: {
+      flex: 1,
+    },
+  });
+}

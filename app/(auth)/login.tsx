@@ -1,18 +1,23 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
   KeyboardAvoidingView,
   Platform,
-  ActivityIndicator,
+  StyleSheet,
+  Text,
+  View,
 } from 'react-native';
 import { router } from 'expo-router';
+
+import { Button } from '@/components/ui/button';
+import { TextField } from '@/components/ui/text-field';
+import { Spacing, Typography, type ThemeColors } from '@/constants/theme';
+import { useThemeColors } from '@/hooks/use-theme-colors';
 import api from '@/lib/api';
 
 export default function LoginScreen() {
+  const colors = useThemeColors();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
   const [email, setEmail] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -39,80 +44,52 @@ export default function LoginScreen() {
         <Text style={styles.title}>Welcome</Text>
         <Text style={styles.subtitle}>Enter your email to get started</Text>
 
-        <TextInput
-          style={styles.input}
+        <TextField
           placeholder="Email address"
-          placeholderTextColor="#999"
           value={email}
           onChangeText={setEmail}
           keyboardType="email-address"
           autoCapitalize="none"
           autoCorrect={false}
+          error={error || undefined}
+          containerStyle={styles.field}
         />
 
-        {error ? <Text style={styles.error}>{error}</Text> : null}
-
-        <TouchableOpacity
-          style={[styles.button, (!email || loading) && styles.buttonDisabled]}
+        <Button
+          label="Send code"
           onPress={handleSendCode}
-          disabled={!email || loading}
-        >
-          {loading ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <Text style={styles.buttonText}>Send code</Text>
-          )}
-        </TouchableOpacity>
+          disabled={!email}
+          loading={loading}
+          fullWidth
+        />
       </View>
     </KeyboardAvoidingView>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
-  inner: {
-    flex: 1,
-    justifyContent: 'center',
-    paddingHorizontal: 24,
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: '700',
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#666',
-    marginBottom: 32,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 12,
-    padding: 16,
-    fontSize: 16,
-    marginBottom: 16,
-  },
-  error: {
-    color: '#e74c3c',
-    marginBottom: 16,
-    fontSize: 14,
-  },
-  button: {
-    backgroundColor: '#000',
-    borderRadius: 12,
-    padding: 16,
-    alignItems: 'center',
-  },
-  buttonDisabled: {
-    opacity: 0.5,
-  },
-  buttonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-});
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    inner: {
+      flex: 1,
+      justifyContent: 'center',
+      paddingHorizontal: Spacing.xl,
+    },
+    title: {
+      ...Typography.displayMedium,
+      color: colors.text,
+      marginBottom: Spacing.sm,
+    },
+    subtitle: {
+      ...Typography.body,
+      color: colors.textSecondary,
+      marginBottom: Spacing['2xl'],
+    },
+    field: {
+      marginBottom: Spacing.base,
+    },
+  });
+}

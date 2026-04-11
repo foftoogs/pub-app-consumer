@@ -1,23 +1,28 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
   KeyboardAvoidingView,
   Platform,
-  ActivityIndicator,
+  Pressable,
   ScrollView,
+  StyleSheet,
+  Text,
+  View,
 } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { router } from 'expo-router';
+
+import { Button } from '@/components/ui/button';
+import { TextField } from '@/components/ui/text-field';
+import { Radius, Spacing, Typography, type ThemeColors } from '@/constants/theme';
+import { useThemeColors } from '@/hooks/use-theme-colors';
 import { useNightsStore } from '@/stores/nights';
 
 type Step = 'name' | 'date' | 'theme' | 'budget';
 const STEPS: Step[] = ['name', 'date', 'theme', 'budget'];
 
 export default function NightCreateScreen() {
+  const colors = useThemeColors();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const createNight = useNightsStore((s) => s.createNight);
 
   const [step, setStep] = useState(0);
@@ -37,7 +42,7 @@ export default function NightCreateScreen() {
   const canContinue = () => {
     if (currentStep === 'name') return name.trim().length > 0;
     if (currentStep === 'date') return date !== null;
-    return true; // theme and budget are optional
+    return true;
   };
 
   const handleNext = async () => {
@@ -88,11 +93,9 @@ export default function NightCreateScreen() {
 
         {currentStep === 'name' && (
           <View>
-            <Text style={styles.label}>What's the night called?</Text>
-            <TextInput
-              style={styles.input}
+            <Text style={styles.label}>What&apos;s the night called?</Text>
+            <TextField
               placeholder="e.g. Friday Pub Crawl"
-              placeholderTextColor="#999"
               value={name}
               onChangeText={setName}
               autoFocus
@@ -103,10 +106,7 @@ export default function NightCreateScreen() {
         {currentStep === 'date' && (
           <View>
             <Text style={styles.label}>When is it?</Text>
-            <TouchableOpacity
-              style={styles.dateButton}
-              onPress={() => setShowDatePicker(true)}
-            >
+            <Pressable style={styles.dateButton} onPress={() => setShowDatePicker(true)}>
               <Text style={date ? styles.dateText : styles.datePlaceholder}>
                 {date
                   ? date.toLocaleDateString('en-AU', {
@@ -117,7 +117,7 @@ export default function NightCreateScreen() {
                     })
                   : 'Select a date'}
               </Text>
-            </TouchableOpacity>
+            </Pressable>
             {showDatePicker && (
               <DateTimePicker
                 value={date ?? tomorrow}
@@ -135,10 +135,8 @@ export default function NightCreateScreen() {
         {currentStep === 'theme' && (
           <View>
             <Text style={styles.label}>Any theme? (optional)</Text>
-            <TextInput
-              style={styles.input}
+            <TextField
               placeholder="e.g. 80s night, cocktail bars"
-              placeholderTextColor="#999"
               value={theme}
               onChangeText={setTheme}
               autoFocus
@@ -149,10 +147,8 @@ export default function NightCreateScreen() {
         {currentStep === 'budget' && (
           <View>
             <Text style={styles.label}>Budget per person? (optional)</Text>
-            <TextInput
-              style={styles.input}
+            <TextField
               placeholder="e.g. 100"
-              placeholderTextColor="#999"
               value={budget}
               onChangeText={setBudget}
               keyboardType="numeric"
@@ -164,112 +160,87 @@ export default function NightCreateScreen() {
         {error ? <Text style={styles.error}>{error}</Text> : null}
 
         <View style={styles.buttons}>
-          <TouchableOpacity style={styles.backButton} onPress={handleBack}>
-            <Text style={styles.backButtonText}>
-              {step === 0 ? 'Cancel' : 'Back'}
-            </Text>
-          </TouchableOpacity>
+          <Pressable style={styles.backButton} onPress={handleBack}>
+            <Text style={styles.backButtonText}>{step === 0 ? 'Cancel' : 'Back'}</Text>
+          </Pressable>
 
-          <TouchableOpacity
-            style={[styles.nextButton, (!canContinue() || loading) && styles.buttonDisabled]}
+          <Button
+            label={step === STEPS.length - 1 ? 'Create' : 'Next'}
             onPress={handleNext}
-            disabled={!canContinue() || loading}
-          >
-            {loading ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <Text style={styles.nextButtonText}>
-                {step === STEPS.length - 1 ? 'Create' : 'Next'}
-              </Text>
-            )}
-          </TouchableOpacity>
+            disabled={!canContinue()}
+            loading={loading}
+          />
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
-  inner: {
-    flexGrow: 1,
-    justifyContent: 'center',
-    paddingHorizontal: 24,
-  },
-  progress: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 8,
-    marginBottom: 40,
-  },
-  progressDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#ddd',
-  },
-  progressDotActive: {
-    backgroundColor: '#000',
-  },
-  label: {
-    fontSize: 24,
-    fontWeight: '700',
-    marginBottom: 16,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 12,
-    padding: 16,
-    fontSize: 16,
-  },
-  dateButton: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 12,
-    padding: 16,
-  },
-  dateText: {
-    fontSize: 16,
-  },
-  datePlaceholder: {
-    fontSize: 16,
-    color: '#999',
-  },
-  error: {
-    color: '#e74c3c',
-    marginTop: 16,
-    fontSize: 14,
-    textAlign: 'center',
-  },
-  buttons: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 32,
-  },
-  backButton: {
-    paddingVertical: 16,
-    paddingHorizontal: 24,
-  },
-  backButtonText: {
-    fontSize: 16,
-    color: '#666',
-  },
-  nextButton: {
-    backgroundColor: '#000',
-    borderRadius: 12,
-    paddingVertical: 16,
-    paddingHorizontal: 32,
-  },
-  buttonDisabled: {
-    opacity: 0.5,
-  },
-  nextButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-});
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    inner: {
+      flexGrow: 1,
+      justifyContent: 'center',
+      paddingHorizontal: Spacing.xl,
+    },
+    progress: {
+      flexDirection: 'row',
+      justifyContent: 'center',
+      gap: Spacing.sm,
+      marginBottom: Spacing['3xl'],
+    },
+    progressDot: {
+      width: 8,
+      height: 8,
+      borderRadius: Radius.pill,
+      backgroundColor: colors.border,
+    },
+    progressDotActive: {
+      backgroundColor: colors.primary,
+    },
+    label: {
+      ...Typography.heading,
+      color: colors.text,
+      marginBottom: Spacing.base,
+    },
+    dateButton: {
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: Radius.md,
+      padding: Spacing.base,
+      backgroundColor: colors.surface,
+    },
+    dateText: {
+      ...Typography.body,
+      color: colors.text,
+    },
+    datePlaceholder: {
+      ...Typography.body,
+      color: colors.textMuted,
+    },
+    error: {
+      ...Typography.caption,
+      color: colors.error,
+      marginTop: Spacing.base,
+      textAlign: 'center',
+    },
+    buttons: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginTop: Spacing['2xl'],
+    },
+    backButton: {
+      paddingVertical: Spacing.base,
+      paddingHorizontal: Spacing.xl,
+    },
+    backButtonText: {
+      ...Typography.button,
+      color: colors.textSecondary,
+    },
+  });
+}

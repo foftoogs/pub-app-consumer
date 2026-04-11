@@ -219,7 +219,7 @@ describe('ItineraryScreen', () => {
     useAuthStore.setState({ consumer: memberConsumer });
     const { queryByText, queryAllByText } = render(<ItineraryScreen />);
     expect(queryByText('+ Add venue')).toBeNull();
-    expect(queryAllByText('x')).toHaveLength(0);
+    expect(queryAllByText('×')).toHaveLength(0);
     expect(queryByText('Move up')).toBeNull();
   });
 
@@ -229,18 +229,18 @@ describe('ItineraryScreen', () => {
     });
     const { queryByText, queryAllByText } = render(<ItineraryScreen />);
     expect(queryByText('+ Add venue')).toBeNull();
-    expect(queryAllByText('x')).toHaveLength(0);
+    expect(queryAllByText('×')).toHaveLength(0);
   });
 
   it('shows remove buttons for organiser in planning', () => {
     const { getAllByText } = render(<ItineraryScreen />);
-    expect(getAllByText('x')).toHaveLength(2);
+    expect(getAllByText('×')).toHaveLength(2);
   });
 
   it('shows confirmation dialog on remove press', () => {
     const alertSpy = jest.spyOn(Alert, 'alert');
     const { getAllByText } = render(<ItineraryScreen />);
-    fireEvent.press(getAllByText('x')[0]);
+    fireEvent.press(getAllByText('×')[0]);
     expect(alertSpy).toHaveBeenCalledWith(
       'Remove Venue',
       'Remove The Local Pub from the itinerary?',

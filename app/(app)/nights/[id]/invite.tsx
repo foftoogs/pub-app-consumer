@@ -1,23 +1,24 @@
-import { useState } from 'react';
-import {
-  View,
-  Text,
-  FlatList,
-  TouchableOpacity,
-  StyleSheet,
-  ActivityIndicator,
-  Platform,
-} from 'react-native';
+import { useMemo, useState } from 'react';
+import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
-import { useNightsStore } from '@/stores/nights';
+
+import { Button } from '@/components/ui/button';
+import { Radius, Spacing, Typography, type ThemeColors } from '@/constants/theme';
+import { useThemeColors } from '@/hooks/use-theme-colors';
 import { useAuthStore } from '@/stores/auth';
+import { useNightsStore } from '@/stores/nights';
 import { NightInvite } from '@/types/night';
 
-const STATUS_COLORS: Record<NightInvite['status'], string> = {
-  pending: '#3b82f6',
-  used: '#22c55e',
-  expired: '#9ca3af',
-};
+function inviteStatusColor(colors: ThemeColors, status: NightInvite['status']) {
+  switch (status) {
+    case 'pending':
+      return colors.info;
+    case 'used':
+      return colors.success;
+    case 'expired':
+      return colors.textMuted;
+  }
+}
 
 function formatDate(dateStr: string) {
   const d = new Date(dateStr);
@@ -29,6 +30,8 @@ function buildInviteLink(code: string) {
 }
 
 export default function InviteScreen() {
+  const colors = useThemeColors();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const night = useNightsStore((s) => s.currentNight);
   const generateInvite = useNightsStore((s) => s.generateInvite);
   const consumer = useAuthStore((s) => s.consumer);
@@ -71,7 +74,7 @@ export default function InviteScreen() {
   const renderInvite = ({ item }: { item: NightInvite }) => (
     <View style={styles.inviteCard}>
       <View style={styles.inviteHeader}>
-        <View style={[styles.statusChip, { backgroundColor: STATUS_COLORS[item.status] }]}>
+        <View style={[styles.statusChip, { backgroundColor: inviteStatusColor(colors, item.status) }]}>
           <Text style={styles.statusChipText}>{item.status}</Text>
         </View>
         <Text style={styles.inviteDate}>{formatDate(item.created_at)}</Text>
@@ -84,17 +87,18 @@ export default function InviteScreen() {
       )}
 
       {item.accepted_by && (
-        <Text style={styles.acceptedText}>
-          Accepted by {item.accepted_by.name}
-        </Text>
+        <Text style={styles.acceptedText}>Accepted by {item.accepted_by.name}</Text>
       )}
 
       {item.status === 'pending' && (
-        <TouchableOpacity style={styles.copyButton} onPress={() => handleCopy(item)}>
+        <Pressable
+          style={({ pressed }) => [styles.copyButton, pressed && styles.copyButtonPressed]}
+          onPress={() => handleCopy(item)}
+        >
           <Text style={styles.copyButtonText}>
             {copiedId === item.id ? 'Copied!' : 'Copy Link'}
           </Text>
-        </TouchableOpacity>
+        </Pressable>
       )}
     </View>
   );
@@ -115,17 +119,12 @@ export default function InviteScreen() {
 
             {error ? <Text style={styles.error}>{error}</Text> : null}
 
-            <TouchableOpacity
-              style={[styles.generateButton, generating && styles.buttonDisabled]}
+            <Button
+              label="Generate Invite Link"
               onPress={handleGenerate}
-              disabled={generating}
-            >
-              {generating ? (
-                <ActivityIndicator color="#fff" size="small" />
-              ) : (
-                <Text style={styles.generateButtonText}>Generate Invite Link</Text>
-              )}
-            </TouchableOpacity>
+              loading={generating}
+              fullWidth
+            />
           </View>
         }
         ListEmptyComponent={
@@ -138,117 +137,108 @@ export default function InviteScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
-  list: {
-    padding: 16,
-  },
-  header: {
-    marginBottom: 20,
-  },
-  headerTitle: {
-    fontSize: 22,
-    fontWeight: '700',
-    marginBottom: 4,
-  },
-  headerSubtitle: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 16,
-  },
-  error: {
-    color: '#e74c3c',
-    fontSize: 13,
-    marginBottom: 12,
-  },
-  generateButton: {
-    backgroundColor: '#000',
-    borderRadius: 12,
-    padding: 14,
-    alignItems: 'center',
-  },
-  buttonDisabled: {
-    opacity: 0.5,
-  },
-  generateButtonText: {
-    color: '#fff',
-    fontSize: 15,
-    fontWeight: '600',
-  },
-  inviteCard: {
-    borderWidth: 1,
-    borderColor: '#eee',
-    borderRadius: 12,
-    padding: 14,
-    marginBottom: 10,
-  },
-  inviteHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  statusChip: {
-    paddingHorizontal: 10,
-    paddingVertical: 3,
-    borderRadius: 10,
-  },
-  statusChipText: {
-    color: '#fff',
-    fontSize: 12,
-    fontWeight: '600',
-    textTransform: 'capitalize',
-  },
-  inviteDate: {
-    fontSize: 12,
-    color: '#999',
-  },
-  inviteCode: {
-    fontSize: 13,
-    color: '#333',
-    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
-    marginBottom: 6,
-  },
-  expiryText: {
-    fontSize: 12,
-    color: '#999',
-    marginBottom: 4,
-  },
-  acceptedText: {
-    fontSize: 12,
-    color: '#22c55e',
-    marginBottom: 4,
-  },
-  copyButton: {
-    marginTop: 8,
-    backgroundColor: '#f5f5f5',
-    borderRadius: 8,
-    padding: 10,
-    alignItems: 'center',
-  },
-  copyButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#000',
-  },
-  empty: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  emptyText: {
-    fontSize: 16,
-    color: '#999',
-  },
-  emptyList: {
-    paddingTop: 20,
-    alignItems: 'center',
-  },
-  emptyListText: {
-    fontSize: 15,
-    color: '#999',
-  },
-});
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    list: {
+      padding: Spacing.base,
+    },
+    header: {
+      marginBottom: Spacing.lg,
+    },
+    headerTitle: {
+      ...Typography.subheading,
+      color: colors.text,
+      marginBottom: Spacing.xs,
+    },
+    headerSubtitle: {
+      ...Typography.caption,
+      color: colors.textSecondary,
+      marginBottom: Spacing.base,
+    },
+    error: {
+      ...Typography.caption,
+      color: colors.error,
+      marginBottom: Spacing.md,
+    },
+    inviteCard: {
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: Radius.md,
+      padding: Spacing.md,
+      marginBottom: Spacing.md,
+      backgroundColor: colors.surface,
+    },
+    inviteHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: Spacing.sm,
+    },
+    statusChip: {
+      paddingHorizontal: Spacing.md,
+      paddingVertical: 3,
+      borderRadius: Radius.sm,
+    },
+    statusChipText: {
+      ...Typography.label,
+      color: colors.textOnPrimary,
+      textTransform: 'capitalize',
+      letterSpacing: 0,
+    },
+    inviteDate: {
+      ...Typography.caption,
+      color: colors.textMuted,
+    },
+    inviteCode: {
+      ...Typography.mono,
+      color: colors.textSecondary,
+      marginBottom: Spacing.xs,
+    },
+    expiryText: {
+      ...Typography.caption,
+      color: colors.textMuted,
+      marginBottom: Spacing.xs,
+    },
+    acceptedText: {
+      ...Typography.caption,
+      color: colors.success,
+      marginBottom: Spacing.xs,
+    },
+    copyButton: {
+      marginTop: Spacing.sm,
+      backgroundColor: colors.surfaceAlt,
+      borderRadius: Radius.sm,
+      padding: Spacing.md,
+      alignItems: 'center',
+    },
+    copyButtonPressed: {
+      backgroundColor: colors.surfacePressed,
+    },
+    copyButtonText: {
+      ...Typography.buttonSmall,
+      color: colors.primary,
+    },
+    empty: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: colors.background,
+    },
+    emptyText: {
+      ...Typography.body,
+      color: colors.textMuted,
+    },
+    emptyList: {
+      paddingTop: Spacing.lg,
+      alignItems: 'center',
+    },
+    emptyListText: {
+      ...Typography.bodyMedium,
+      color: colors.textMuted,
+    },
+  });
+}
