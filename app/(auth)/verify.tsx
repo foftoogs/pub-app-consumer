@@ -53,7 +53,7 @@ export default function VerifyScreen() {
         }
       }
 
-      router.replace('/(app)/nights');
+      router.replace('/(app)/home');
     } catch (err: any) {
       setError(err.response?.data?.message ?? 'Invalid or expired code');
     } finally {

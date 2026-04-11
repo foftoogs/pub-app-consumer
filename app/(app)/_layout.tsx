@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useThemeColors } from '@/hooks/use-theme-colors';
 
 const TAB_ICONS: Record<string, { focused: string; default: string }> = {
+  home: { focused: 'home', default: 'home-outline' },
   nights: { focused: 'calendar', default: 'calendar-outline' },
   venues: { focused: 'location', default: 'location-outline' },
   profile: { focused: 'person', default: 'person-outline' },
@@ -26,6 +27,19 @@ export default function AppLayout() {
         tabBarInactiveTintColor: colors.tabBarInactive,
       }}
     >
+      <Tabs.Screen
+        name="home"
+        options={{
+          title: 'Home',
+          tabBarIcon: ({ focused, color, size }) => (
+            <Ionicons
+              name={(focused ? TAB_ICONS.home.focused : TAB_ICONS.home.default) as any}
+              size={size}
+              color={color}
+            />
+          ),
+        }}
+      />
       <Tabs.Screen
         name="nights"
         options={({ route }) => {
