@@ -1,8 +1,11 @@
+import { useMemo } from 'react';
 import { Tabs } from 'expo-router';
 import { getFocusedRouteNameFromRoute } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 
 import { useThemeColors } from '@/hooks/use-theme-colors';
+import { useNightsStore } from '@/stores/nights';
+import { Night } from '@/types/night';
 
 const TAB_ICONS: Record<string, { focused: string; default: string }> = {
   home: { focused: 'home', default: 'home-outline' },
@@ -12,8 +15,14 @@ const TAB_ICONS: Record<string, { focused: string; default: string }> = {
   settings: { focused: 'settings', default: 'settings-outline' },
 };
 
+function hasActiveNight(nights: Night[]): boolean {
+  return nights.some((n) => n.status === 'active');
+}
+
 export default function AppLayout() {
   const colors = useThemeColors();
+  const nights = useNightsStore((s) => s.nights);
+  const showLive = useMemo(() => hasActiveNight(nights), [nights]);
 
   return (
     <Tabs
@@ -62,6 +71,21 @@ export default function AppLayout() {
               />
             ),
           };
+        }}
+      />
+      <Tabs.Screen
+        name="live"
+        options={{
+          title: 'Live',
+          href: showLive ? '/(app)/live' : null,
+          tabBarActiveTintColor: colors.live,
+          tabBarIcon: ({ focused, size }) => (
+            <Ionicons
+              name={focused ? 'radio' : 'radio-outline'}
+              size={size}
+              color={colors.live}
+            />
+          ),
         }}
       />
       <Tabs.Screen
