@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -16,8 +16,10 @@ import DraggableFlatList, {
   RenderItemParams,
   ScaleDecorator,
 } from 'react-native-draggable-flatlist';
+import * as Location from 'expo-location';
 
 import { TextField } from '@/components/ui/text-field';
+import VenueMap, { MapPin } from '@/components/ui/venue-map';
 import {
   Elevation,
   Radius,
@@ -31,6 +33,27 @@ import { useNightsStore } from '@/stores/nights';
 import { Itinerary, Venue } from '@/types/night';
 
 const MAX_VENUES = 3;
+
+function filterAndSortVenues(
+  venues: Venue[],
+  night: { itinerary: Itinerary[] } | null,
+  userLocation: { latitude: number; longitude: number } | null,
+): Venue[] {
+  const itinerary = night?.itinerary ?? [];
+  const available = venues.filter(
+    (v) => !itinerary.some((i) => i.venue.id === v.id)
+  );
+  if (!userLocation) return available;
+  return [...available].sort((a, b) => {
+    const distA = a.latitude != null && a.longitude != null
+      ? Math.hypot(a.latitude - userLocation.latitude, a.longitude - userLocation.longitude)
+      : Infinity;
+    const distB = b.latitude != null && b.longitude != null
+      ? Math.hypot(b.latitude - userLocation.latitude, b.longitude - userLocation.longitude)
+      : Infinity;
+    return distA - distB;
+  });
+}
 
 export default function ItineraryScreen() {
   const colors = useThemeColors();
@@ -51,6 +74,17 @@ export default function ItineraryScreen() {
   const [departureTime, setDepartureTime] = useState('');
   const [addLoading, setAddLoading] = useState(false);
   const [addError, setAddError] = useState('');
+  const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status === 'granted') {
+        const loc = await Location.getCurrentPositionAsync({});
+        setUserLocation({ latitude: loc.coords.latitude, longitude: loc.coords.longitude });
+      }
+    })();
+  }, []);
 
   if (!night) return null;
 
@@ -58,6 +92,16 @@ export default function ItineraryScreen() {
   const isPlanning = night.status === 'planning';
   const canEdit = isOrganiser && isPlanning;
   const sortedItinerary = [...night.itinerary].sort((a, b) => a.order - b.order);
+
+  const itineraryPins: MapPin[] = sortedItinerary
+    .filter((item) => item.venue.latitude != null && item.venue.longitude != null)
+    .map((item, idx) => ({
+      id: item.id,
+      latitude: item.venue.latitude!,
+      longitude: item.venue.longitude!,
+      title: item.venue.name,
+      label: String(idx + 1),
+    }));
 
   const handleOpenVenuePicker = () => {
     setShowVenuePicker(true);
@@ -110,9 +154,21 @@ export default function ItineraryScreen() {
     );
   };
 
-  const filteredVenues = venues.filter(
-    (v) => !night.itinerary.some((i) => i.venue.id === v.id)
-  );
+  const filteredVenues = filterAndSortVenues(venues, night, userLocation);
+
+  const pickerPins: MapPin[] = filteredVenues
+    .filter((v) => v.latitude != null && v.longitude != null)
+    .map((v) => ({
+      id: v.id,
+      latitude: v.latitude!,
+      longitude: v.longitude!,
+      title: v.name,
+      selected: selectedVenue?.id === v.id,
+    }));
+
+  const pickerMapRegion = userLocation
+    ? { latitude: userLocation.latitude, longitude: userLocation.longitude, latitudeDelta: 0.05, longitudeDelta: 0.05 }
+    : undefined;
 
   const renderVenueOption = ({ item }: { item: Venue }) => {
     const isSelected = selectedVenue?.id === item.id;
@@ -190,6 +246,15 @@ export default function ItineraryScreen() {
 
   return (
     <GestureHandlerRootView style={styles.container}>
+      {itineraryPins.length > 0 && (
+        <View style={styles.mapSection}>
+          <VenueMap
+            testID="itinerary-map"
+            pins={itineraryPins}
+            height={200}
+          />
+        </View>
+      )}
       <View style={styles.slots}>
         {sortedItinerary.length === 0 && !canEdit && (
           <View style={styles.emptyFull}>
@@ -268,6 +333,21 @@ export default function ItineraryScreen() {
             autoFocus
           />
 
+          {pickerPins.length > 0 && (
+            <View style={styles.pickerMapContainer}>
+              <VenueMap
+                testID="venue-picker-map"
+                pins={pickerPins}
+                initialRegion={pickerMapRegion}
+                height={220}
+                onPinPress={(pin) => {
+                  const venue = filteredVenues.find((v) => v.id === pin.id);
+                  if (venue) setSelectedVenue(venue);
+                }}
+              />
+            </View>
+          )}
+
           {selectedVenue && (
             <View style={styles.timeInputs}>
               <View style={styles.timeInputGroup}>
@@ -319,6 +399,14 @@ function createStyles(colors: ThemeColors) {
     container: {
       flex: 1,
       backgroundColor: colors.background,
+    },
+    mapSection: {
+      paddingHorizontal: Spacing.base,
+      paddingTop: Spacing.base,
+    },
+    pickerMapContainer: {
+      paddingHorizontal: Spacing.base,
+      marginBottom: Spacing.md,
     },
     slots: {
       flex: 1,

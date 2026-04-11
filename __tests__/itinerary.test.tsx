@@ -144,11 +144,12 @@ beforeEach(() => {
 
 describe('ItineraryScreen', () => {
   it('renders itinerary items with venue names and stop numbers', () => {
-    const { getByText } = render(<ItineraryScreen />);
+    const { getByText, getAllByText } = render(<ItineraryScreen />);
     expect(getByText('The Local Pub')).toBeTruthy();
     expect(getByText('Cocktail Lounge')).toBeTruthy();
-    expect(getByText('1')).toBeTruthy();
-    expect(getByText('2')).toBeTruthy();
+    // Stop badges + map marker labels both render numbers
+    expect(getAllByText('1').length).toBeGreaterThanOrEqual(1);
+    expect(getAllByText('2').length).toBeGreaterThanOrEqual(1);
   });
 
   it('shows suburb on venue cards', () => {
