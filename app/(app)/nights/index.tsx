@@ -1,28 +1,45 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-  View,
-  Text,
   FlatList,
-  TouchableOpacity,
+  Pressable,
   RefreshControl,
   StyleSheet,
+  Text,
+  View,
 } from 'react-native';
 import { router } from 'expo-router';
+
+import {
+  Elevation,
+  Radius,
+  Spacing,
+  Typography,
+  type ThemeColors,
+} from '@/constants/theme';
+import { useThemeColors } from '@/hooks/use-theme-colors';
 import { useNightsStore } from '@/stores/nights';
 import { Night } from '@/types/night';
-
-const STATUS_COLORS: Record<Night['status'], string> = {
-  planning: '#3b82f6',
-  active: '#22c55e',
-  closed: '#9ca3af',
-  cancelled: '#ef4444',
-};
 
 function isUpcoming(night: Night) {
   return new Date(night.date) >= new Date(new Date().toDateString());
 }
 
+function statusColor(colors: ThemeColors, status: Night['status']) {
+  switch (status) {
+    case 'planning':
+      return colors.info;
+    case 'active':
+      return colors.success;
+    case 'closed':
+      return colors.textMuted;
+    case 'cancelled':
+      return colors.error;
+  }
+}
+
 export default function NightListScreen() {
+  const colors = useThemeColors();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { nights, loading, error, fetchNights } = useNightsStore();
   const [tab, setTab] = useState<'upcoming' | 'past'>('upcoming');
 
@@ -34,50 +51,55 @@ export default function NightListScreen() {
     tab === 'upcoming' ? isUpcoming(n) : !isUpcoming(n)
   );
 
-  const renderNight = useCallback(({ item }: { item: Night }) => (
-    <TouchableOpacity
-      style={styles.card}
-      onPress={() => router.push(`/(app)/nights/${item.id}`)}
-    >
-      <View style={styles.cardHeader}>
-        <Text style={styles.cardTitle} numberOfLines={1}>{item.name}</Text>
-        <View style={[styles.statusChip, { backgroundColor: STATUS_COLORS[item.status] }]}>
-          <Text style={styles.statusText}>{item.status}</Text>
+  const renderNight = useCallback(
+    ({ item }: { item: Night }) => (
+      <Pressable
+        style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
+        onPress={() => router.push(`/(app)/nights/${item.id}`)}
+      >
+        <View style={styles.cardHeader}>
+          <Text style={styles.cardTitle} numberOfLines={1}>
+            {item.name}
+          </Text>
+          <View
+            style={[styles.statusChip, { backgroundColor: statusColor(colors, item.status) }]}
+          >
+            <Text style={styles.statusText}>{item.status}</Text>
+          </View>
         </View>
-      </View>
-      <Text style={styles.cardDate}>
-        {new Date(item.date).toLocaleDateString('en-AU', {
-          weekday: 'short',
-          day: 'numeric',
-          month: 'short',
-          year: 'numeric',
-        })}
-      </Text>
-      <Text style={styles.cardMeta}>
-        {item.members_count} {item.members_count === 1 ? 'member' : 'members'}
-      </Text>
-    </TouchableOpacity>
-  ), []);
+        <Text style={styles.cardDate}>
+          {new Date(item.date).toLocaleDateString('en-AU', {
+            weekday: 'short',
+            day: 'numeric',
+            month: 'short',
+            year: 'numeric',
+          })}
+        </Text>
+        <Text style={styles.cardMeta}>
+          {item.members_count} {item.members_count === 1 ? 'member' : 'members'}
+        </Text>
+      </Pressable>
+    ),
+    [colors, styles]
+  );
 
   return (
     <View style={styles.container}>
       <View style={styles.tabs}>
-        <TouchableOpacity
+        <Pressable
           style={[styles.tab, tab === 'upcoming' && styles.tabActive]}
           onPress={() => setTab('upcoming')}
         >
           <Text style={[styles.tabText, tab === 'upcoming' && styles.tabTextActive]}>
             Upcoming
           </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
+        </Pressable>
+        <Pressable
           style={[styles.tab, tab === 'past' && styles.tabActive]}
           onPress={() => setTab('past')}
         >
-          <Text style={[styles.tabText, tab === 'past' && styles.tabTextActive]}>
-            Past
-          </Text>
-        </TouchableOpacity>
+          <Text style={[styles.tabText, tab === 'past' && styles.tabTextActive]}>Past</Text>
+        </Pressable>
       </View>
 
       {error ? (
@@ -92,7 +114,11 @@ export default function NightListScreen() {
         renderItem={renderNight}
         contentContainerStyle={filtered.length === 0 ? styles.emptyContainer : styles.list}
         refreshControl={
-          <RefreshControl refreshing={loading} onRefresh={fetchNights} />
+          <RefreshControl
+            refreshing={loading}
+            onRefresh={fetchNights}
+            tintColor={colors.primary}
+          />
         }
         ListEmptyComponent={
           <View style={styles.empty}>
@@ -106,134 +132,139 @@ export default function NightListScreen() {
         }
       />
 
-      <TouchableOpacity
-        style={styles.fab}
+      <Pressable
+        style={({ pressed }) => [styles.fab, pressed && styles.fabPressed]}
         onPress={() => router.push('/(app)/nights/create')}
       >
         <Text style={styles.fabText}>+</Text>
-      </TouchableOpacity>
+      </Pressable>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
-  tabs: {
-    flexDirection: 'row',
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-  },
-  tab: {
-    flex: 1,
-    paddingVertical: 14,
-    alignItems: 'center',
-  },
-  tabActive: {
-    borderBottomWidth: 2,
-    borderBottomColor: '#000',
-  },
-  tabText: {
-    fontSize: 15,
-    color: '#999',
-    fontWeight: '500',
-  },
-  tabTextActive: {
-    color: '#000',
-  },
-  list: {
-    padding: 16,
-  },
-  card: {
-    backgroundColor: '#f9f9f9',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-  },
-  cardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  cardTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    flex: 1,
-    marginRight: 8,
-  },
-  statusChip: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  statusText: {
-    color: '#fff',
-    fontSize: 12,
-    fontWeight: '600',
-    textTransform: 'capitalize',
-  },
-  cardDate: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 4,
-  },
-  cardMeta: {
-    fontSize: 13,
-    color: '#999',
-  },
-  emptyContainer: {
-    flex: 1,
-  },
-  empty: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingTop: 80,
-  },
-  emptyText: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#999',
-  },
-  emptySubtext: {
-    fontSize: 14,
-    color: '#bbb',
-    marginTop: 8,
-  },
-  errorBanner: {
-    backgroundColor: '#fef2f2',
-    borderBottomWidth: 1,
-    borderBottomColor: '#fecaca',
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-  },
-  errorText: {
-    color: '#dc2626',
-    fontSize: 14,
-    textAlign: 'center',
-  },
-  fab: {
-    position: 'absolute',
-    bottom: 24,
-    right: 24,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: '#000',
-    justifyContent: 'center',
-    alignItems: 'center',
-    elevation: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-  },
-  fabText: {
-    color: '#fff',
-    fontSize: 28,
-    lineHeight: 30,
-  },
-});
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    tabs: {
+      flexDirection: 'row',
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+    },
+    tab: {
+      flex: 1,
+      paddingVertical: Spacing.base,
+      alignItems: 'center',
+    },
+    tabActive: {
+      borderBottomWidth: 2,
+      borderBottomColor: colors.primary,
+    },
+    tabText: {
+      ...Typography.bodyMedium,
+      color: colors.textMuted,
+    },
+    tabTextActive: {
+      color: colors.primary,
+    },
+    list: {
+      padding: Spacing.base,
+    },
+    card: {
+      backgroundColor: colors.surface,
+      borderRadius: Radius.lg,
+      padding: Spacing.base,
+      marginBottom: Spacing.md,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    cardPressed: {
+      backgroundColor: colors.surfacePressed,
+      transform: [{ scale: 0.99 }],
+    },
+    cardHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: Spacing.sm,
+    },
+    cardTitle: {
+      ...Typography.subheading,
+      color: colors.text,
+      flex: 1,
+      marginRight: Spacing.sm,
+    },
+    statusChip: {
+      paddingHorizontal: Spacing.md,
+      paddingVertical: Spacing.xs,
+      borderRadius: Radius.md,
+    },
+    statusText: {
+      ...Typography.label,
+      color: colors.textOnPrimary,
+      textTransform: 'capitalize',
+      letterSpacing: 0,
+    },
+    cardDate: {
+      ...Typography.caption,
+      color: colors.textSecondary,
+      marginBottom: Spacing.xs,
+    },
+    cardMeta: {
+      ...Typography.caption,
+      color: colors.textMuted,
+    },
+    emptyContainer: {
+      flex: 1,
+    },
+    empty: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      paddingTop: Spacing['5xl'],
+    },
+    emptyText: {
+      ...Typography.subheading,
+      color: colors.textMuted,
+    },
+    emptySubtext: {
+      ...Typography.caption,
+      color: colors.textMuted,
+      marginTop: Spacing.sm,
+    },
+    errorBanner: {
+      backgroundColor: colors.surfaceAlt,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+      paddingVertical: Spacing.md,
+      paddingHorizontal: Spacing.base,
+    },
+    errorText: {
+      ...Typography.caption,
+      color: colors.error,
+      textAlign: 'center',
+    },
+    fab: {
+      position: 'absolute',
+      bottom: Spacing.xl,
+      right: Spacing.xl,
+      width: 56,
+      height: 56,
+      borderRadius: Radius.pill,
+      backgroundColor: colors.primary,
+      justifyContent: 'center',
+      alignItems: 'center',
+      ...Elevation.md,
+    },
+    fabPressed: {
+      transform: [{ scale: 0.95 }],
+    },
+    fabText: {
+      color: colors.textOnPrimary,
+      fontSize: 28,
+      lineHeight: 30,
+    },
+  });
+}

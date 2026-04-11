@@ -1,27 +1,39 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
-  View,
-  Text,
-  FlatList,
-  TouchableOpacity,
-  TextInput,
-  StyleSheet,
-  Alert,
   ActivityIndicator,
+  Alert,
+  FlatList,
   Modal,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
 } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import DraggableFlatList, {
   RenderItemParams,
   ScaleDecorator,
 } from 'react-native-draggable-flatlist';
-import { useNightsStore } from '@/stores/nights';
+
+import { TextField } from '@/components/ui/text-field';
+import {
+  Elevation,
+  Radius,
+  Spacing,
+  Typography,
+  type ThemeColors,
+} from '@/constants/theme';
+import { useThemeColors } from '@/hooks/use-theme-colors';
 import { useAuthStore } from '@/stores/auth';
+import { useNightsStore } from '@/stores/nights';
 import { Itinerary, Venue } from '@/types/night';
 
 const MAX_VENUES = 3;
 
 export default function ItineraryScreen() {
+  const colors = useThemeColors();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const night = useNightsStore((s) => s.currentNight);
   const venues = useNightsStore((s) => s.venues);
   const venuesLoading = useNightsStore((s) => s.venuesLoading);
@@ -90,22 +102,11 @@ export default function ItineraryScreen() {
     ]);
   };
 
-  const handleMoveUp = (index: number) => {
-    if (index === 0) return;
-    const newOrder = [...sortedItinerary];
-    [newOrder[index - 1], newOrder[index]] = [newOrder[index], newOrder[index - 1]];
-    reorderItinerary(night.id, newOrder.map((i) => i.id));
-  };
-
-  const handleMoveDown = (index: number) => {
-    if (index >= sortedItinerary.length - 1) return;
-    const newOrder = [...sortedItinerary];
-    [newOrder[index], newOrder[index + 1]] = [newOrder[index + 1], newOrder[index]];
-    reorderItinerary(night.id, newOrder.map((i) => i.id));
-  };
-
   const handleDragEnd = ({ data }: { data: Itinerary[] }) => {
-    reorderItinerary(night.id, data.map((i) => i.id));
+    reorderItinerary(
+      night.id,
+      data.map((i) => i.id)
+    );
   };
 
   const filteredVenues = venues.filter(
@@ -115,7 +116,7 @@ export default function ItineraryScreen() {
   const renderVenueOption = ({ item }: { item: Venue }) => {
     const isSelected = selectedVenue?.id === item.id;
     return (
-      <TouchableOpacity
+      <Pressable
         style={[styles.venueOption, isSelected && styles.venueOptionSelected]}
         onPress={() => setSelectedVenue(item)}
       >
@@ -127,7 +128,7 @@ export default function ItineraryScreen() {
             {item.suburb}
           </Text>
         )}
-      </TouchableOpacity>
+      </Pressable>
     );
   };
 
@@ -137,8 +138,7 @@ export default function ItineraryScreen() {
     const index = getIndex() ?? 0;
     return (
       <ScaleDecorator>
-        <TouchableOpacity
-          activeOpacity={1}
+        <Pressable
           onLongPress={canEdit ? drag : undefined}
           disabled={isActive}
           style={[styles.card, isActive && styles.cardDragging]}
@@ -149,25 +149,21 @@ export default function ItineraryScreen() {
             </View>
             <View style={styles.cardHeaderInfo}>
               <Text style={styles.venueName}>{item.venue.name}</Text>
-              {item.venue.suburb && (
-                <Text style={styles.venueSuburb}>{item.venue.suburb}</Text>
-              )}
+              {item.venue.suburb && <Text style={styles.venueSuburb}>{item.venue.suburb}</Text>}
             </View>
             {canEdit && (
               <View style={styles.cardActions}>
                 <View style={styles.dragHandle}>
                   <Text style={styles.dragHandleText}>☰</Text>
                 </View>
-                <TouchableOpacity style={styles.removeButton} onPress={() => handleRemove(item)}>
-                  <Text style={styles.removeButtonText}>x</Text>
-                </TouchableOpacity>
+                <Pressable style={styles.removeButton} onPress={() => handleRemove(item)}>
+                  <Text style={styles.removeButtonText}>×</Text>
+                </Pressable>
               </View>
             )}
           </View>
 
-          {item.venue.address && (
-            <Text style={styles.venueAddress}>{item.venue.address}</Text>
-          )}
+          {item.venue.address && <Text style={styles.venueAddress}>{item.venue.address}</Text>}
 
           <View style={styles.timesRow}>
             {item.estimated_arrival ? (
@@ -186,7 +182,7 @@ export default function ItineraryScreen() {
               <Text style={styles.noTimes}>No times set</Text>
             )}
           </View>
-        </TouchableOpacity>
+        </Pressable>
       </ScaleDecorator>
     );
   };
@@ -226,12 +222,12 @@ export default function ItineraryScreen() {
                   <View style={styles.connectorLine} />
                 </View>
               )}
-              <TouchableOpacity style={styles.emptySlot} onPress={handleOpenVenuePicker}>
+              <Pressable style={styles.emptySlot} onPress={handleOpenVenuePicker}>
                 <View style={styles.emptyStopBadge}>
                   <Text style={styles.emptyStopBadgeText}>{slotIndex + 1}</Text>
                 </View>
                 <Text style={styles.emptySlotText}>+ Add venue</Text>
-              </TouchableOpacity>
+              </Pressable>
             </View>
           );
         })}
@@ -240,24 +236,24 @@ export default function ItineraryScreen() {
       <Modal visible={showVenuePicker} animationType="slide" presentationStyle="pageSheet">
         <View style={styles.modalContainer}>
           <View style={styles.modalHeader}>
-            <TouchableOpacity onPress={() => setShowVenuePicker(false)}>
+            <Pressable onPress={() => setShowVenuePicker(false)}>
               <Text style={styles.modalCancel}>Cancel</Text>
-            </TouchableOpacity>
+            </Pressable>
             <Text style={styles.modalTitle}>Add Venue</Text>
-            <TouchableOpacity
-              onPress={handleAddVenue}
-              disabled={!selectedVenue || addLoading}
-            >
+            <Pressable onPress={handleAddVenue} disabled={!selectedVenue || addLoading}>
               {addLoading ? (
-                <ActivityIndicator size="small" color="#000" />
+                <ActivityIndicator size="small" color={colors.primary} />
               ) : (
                 <Text
-                  style={[styles.modalDone, (!selectedVenue || addLoading) && styles.modalDoneDisabled]}
+                  style={[
+                    styles.modalDone,
+                    (!selectedVenue || addLoading) && styles.modalDoneDisabled,
+                  ]}
                 >
                   Add
                 </Text>
               )}
-            </TouchableOpacity>
+            </Pressable>
           </View>
 
           {addError ? <Text style={styles.addError}>{addError}</Text> : null}
@@ -265,7 +261,7 @@ export default function ItineraryScreen() {
           <TextInput
             style={styles.searchInput}
             placeholder="Search venues..."
-            placeholderTextColor="#999"
+            placeholderTextColor={colors.textMuted}
             value={venueSearch}
             onChangeText={handleSearchVenues}
             autoFocus
@@ -274,32 +270,30 @@ export default function ItineraryScreen() {
           {selectedVenue && (
             <View style={styles.timeInputs}>
               <View style={styles.timeInputGroup}>
-                <Text style={styles.timeLabel}>Arrival (HH:mm)</Text>
-                <TextInput
-                  style={styles.timeInput}
+                <TextField
+                  label="Arrival (HH:mm)"
                   placeholder="18:00"
-                  placeholderTextColor="#ccc"
                   value={arrivalTime}
                   onChangeText={setArrivalTime}
                   keyboardType="numbers-and-punctuation"
+                  style={styles.timeInput}
                 />
               </View>
               <View style={styles.timeInputGroup}>
-                <Text style={styles.timeLabel}>Departure (HH:mm)</Text>
-                <TextInput
-                  style={styles.timeInput}
+                <TextField
+                  label="Departure (HH:mm)"
                   placeholder="20:00"
-                  placeholderTextColor="#ccc"
                   value={departureTime}
                   onChangeText={setDepartureTime}
                   keyboardType="numbers-and-punctuation"
+                  style={styles.timeInput}
                 />
               </View>
             </View>
           )}
 
           {venuesLoading && venues.length === 0 ? (
-            <ActivityIndicator style={styles.venuesLoader} size="large" color="#999" />
+            <ActivityIndicator style={styles.venuesLoader} size="large" color={colors.primary} />
           ) : (
             <FlatList
               data={filteredVenues}
@@ -319,274 +313,253 @@ export default function ItineraryScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
-  slots: {
-    flex: 1,
-    padding: 16,
-    justifyContent: 'center',
-    gap: 0,
-  },
-  connector: {
-    alignItems: 'center',
-    height: 20,
-    justifyContent: 'center',
-  },
-  connectorLine: {
-    width: 2,
-    flex: 1,
-    backgroundColor: '#ddd',
-  },
-  // Filled card
-  card: {
-    flex: 1,
-    backgroundColor: '#fafafa',
-    borderRadius: 16,
-    padding: 18,
-    borderWidth: 1,
-    borderColor: '#eee',
-    justifyContent: 'center',
-  },
-  cardHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  stopBadge: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#000',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 14,
-  },
-  stopBadgeText: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: '700',
-  },
-  cardHeaderInfo: {
-    flex: 1,
-  },
-  venueName: {
-    fontSize: 18,
-    fontWeight: '700',
-  },
-  venueSuburb: {
-    fontSize: 14,
-    color: '#999',
-    marginTop: 1,
-  },
-  venueAddress: {
-    fontSize: 13,
-    color: '#888',
-    marginTop: 8,
-    marginLeft: 54,
-  },
-  timesRow: {
-    flexDirection: 'row',
-    gap: 10,
-    marginTop: 12,
-    marginLeft: 54,
-  },
-  timeChip: {
-    backgroundColor: '#eee',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-  },
-  timeChipLabel: {
-    fontSize: 10,
-    color: '#999',
-    textTransform: 'uppercase',
-    fontWeight: '600',
-    letterSpacing: 0.5,
-  },
-  timeChipValue: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
-    marginTop: 1,
-  },
-  noTimes: {
-    fontSize: 13,
-    color: '#ccc',
-    fontStyle: 'italic',
-  },
-  cardActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  dragHandle: {
-    padding: 8,
-  },
-  dragHandleText: {
-    fontSize: 20,
-    color: '#bbb',
-  },
-  cardDragging: {
-    backgroundColor: '#f0f0f0',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 8,
-  },
-  removeButton: {
-    padding: 8,
-  },
-  removeButtonText: {
-    fontSize: 20,
-    color: '#ccc',
-    fontWeight: '600',
-  },
-  listContent: {
-    paddingBottom: 0,
-  },
-  // Empty slot
-  emptySlot: {
-    flex: 1,
-    borderRadius: 16,
-    borderWidth: 2,
-    borderColor: '#ddd',
-    borderStyle: 'dashed',
-    justifyContent: 'center',
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: 12,
-    minHeight: 80,
-  },
-  emptyStopBadge: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#eee',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  emptyStopBadgeText: {
-    color: '#bbb',
-    fontSize: 18,
-    fontWeight: '700',
-  },
-  emptySlotText: {
-    fontSize: 16,
-    color: '#bbb',
-    fontWeight: '500',
-  },
-  // Full empty state (non-organiser, no items)
-  emptyFull: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  emptyText: {
-    fontSize: 16,
-    color: '#999',
-  },
-  // Modal styles
-  addError: {
-    color: '#e74c3c',
-    fontSize: 13,
-    marginHorizontal: 16,
-    marginBottom: 8,
-  },
-  modalContainer: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-  },
-  modalCancel: {
-    fontSize: 16,
-    color: '#666',
-  },
-  modalTitle: {
-    fontSize: 17,
-    fontWeight: '600',
-  },
-  modalDone: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#000',
-  },
-  modalDoneDisabled: {
-    opacity: 0.3,
-  },
-  searchInput: {
-    margin: 16,
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 12,
-    padding: 14,
-    fontSize: 15,
-  },
-  timeInputs: {
-    flexDirection: 'row',
-    paddingHorizontal: 16,
-    gap: 12,
-    marginBottom: 12,
-  },
-  timeInputGroup: {
-    flex: 1,
-  },
-  timeLabel: {
-    fontSize: 12,
-    color: '#666',
-    marginBottom: 4,
-  },
-  timeInput: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 10,
-    padding: 10,
-    fontSize: 15,
-    textAlign: 'center',
-  },
-  venueList: {
-    paddingHorizontal: 16,
-  },
-  venueOption: {
-    padding: 14,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#eee',
-    marginBottom: 8,
-  },
-  venueOptionSelected: {
-    borderColor: '#000',
-    backgroundColor: '#f5f5f5',
-  },
-  venueOptionName: {
-    fontSize: 15,
-    fontWeight: '500',
-  },
-  venueOptionNameSelected: {
-    fontWeight: '600',
-  },
-  venueOptionSuburb: {
-    fontSize: 13,
-    color: '#999',
-    marginTop: 2,
-  },
-  venueOptionSuburbSelected: {
-    color: '#666',
-  },
-  venuesLoader: {
-    marginTop: 40,
-  },
-  emptyModal: {
-    paddingTop: 40,
-    alignItems: 'center',
-  },
-});
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    slots: {
+      flex: 1,
+      padding: Spacing.base,
+      justifyContent: 'center',
+    },
+    connector: {
+      alignItems: 'center',
+      height: Spacing.lg,
+      justifyContent: 'center',
+    },
+    connectorLine: {
+      width: 2,
+      flex: 1,
+      backgroundColor: colors.border,
+    },
+    card: {
+      flex: 1,
+      backgroundColor: colors.surface,
+      borderRadius: Radius.lg,
+      padding: Spacing.base + 2,
+      borderWidth: 1,
+      borderColor: colors.border,
+      justifyContent: 'center',
+    },
+    cardHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    stopBadge: {
+      width: 40,
+      height: 40,
+      borderRadius: Radius.pill,
+      backgroundColor: colors.primary,
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginRight: Spacing.md + 2,
+    },
+    stopBadgeText: {
+      ...Typography.subheading,
+      color: colors.textOnPrimary,
+    },
+    cardHeaderInfo: {
+      flex: 1,
+    },
+    venueName: {
+      ...Typography.subheading,
+      color: colors.text,
+    },
+    venueSuburb: {
+      ...Typography.caption,
+      color: colors.textMuted,
+      marginTop: 1,
+    },
+    venueAddress: {
+      ...Typography.caption,
+      color: colors.textMuted,
+      marginTop: Spacing.sm,
+      marginLeft: 54,
+    },
+    timesRow: {
+      flexDirection: 'row',
+      gap: Spacing.md - 2,
+      marginTop: Spacing.md,
+      marginLeft: 54,
+    },
+    timeChip: {
+      backgroundColor: colors.surfaceAlt,
+      borderRadius: Radius.sm,
+      paddingHorizontal: Spacing.md,
+      paddingVertical: Spacing.xs + 2,
+    },
+    timeChipLabel: {
+      ...Typography.label,
+      color: colors.textMuted,
+    },
+    timeChipValue: {
+      ...Typography.bodySemibold,
+      color: colors.text,
+      marginTop: 1,
+    },
+    noTimes: {
+      ...Typography.caption,
+      color: colors.textMuted,
+      fontStyle: 'italic',
+    },
+    cardActions: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+    },
+    dragHandle: {
+      padding: Spacing.sm,
+    },
+    dragHandleText: {
+      fontSize: 20,
+      color: colors.textMuted,
+    },
+    cardDragging: {
+      backgroundColor: colors.surfaceAlt,
+      ...Elevation.lg,
+    },
+    removeButton: {
+      padding: Spacing.sm,
+    },
+    removeButtonText: {
+      fontSize: 20,
+      color: colors.textMuted,
+      fontWeight: '600',
+    },
+    listContent: {
+      paddingBottom: 0,
+    },
+    emptySlot: {
+      flex: 1,
+      borderRadius: Radius.lg,
+      borderWidth: 2,
+      borderColor: colors.border,
+      borderStyle: 'dashed',
+      justifyContent: 'center',
+      alignItems: 'center',
+      flexDirection: 'row',
+      gap: Spacing.md,
+      minHeight: 80,
+    },
+    emptyStopBadge: {
+      width: 40,
+      height: 40,
+      borderRadius: Radius.pill,
+      backgroundColor: colors.surfaceAlt,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    emptyStopBadgeText: {
+      ...Typography.subheading,
+      color: colors.textMuted,
+    },
+    emptySlotText: {
+      ...Typography.body,
+      color: colors.textMuted,
+    },
+    emptyFull: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    emptyText: {
+      ...Typography.body,
+      color: colors.textMuted,
+    },
+    addError: {
+      ...Typography.caption,
+      color: colors.error,
+      marginHorizontal: Spacing.base,
+      marginBottom: Spacing.sm,
+    },
+    modalContainer: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    modalHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      padding: Spacing.base,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+    },
+    modalCancel: {
+      ...Typography.button,
+      color: colors.textSecondary,
+    },
+    modalTitle: {
+      ...Typography.title,
+      color: colors.text,
+    },
+    modalDone: {
+      ...Typography.button,
+      color: colors.primary,
+    },
+    modalDoneDisabled: {
+      opacity: 0.35,
+    },
+    searchInput: {
+      margin: Spacing.base,
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: Radius.md,
+      padding: Spacing.md + 2,
+      backgroundColor: colors.surface,
+      color: colors.text,
+      ...Typography.bodyMedium,
+    },
+    timeInputs: {
+      flexDirection: 'row',
+      paddingHorizontal: Spacing.base,
+      gap: Spacing.md,
+      marginBottom: Spacing.md,
+    },
+    timeInputGroup: {
+      flex: 1,
+    },
+    timeInput: {
+      textAlign: 'center',
+    },
+    venueList: {
+      paddingHorizontal: Spacing.base,
+    },
+    venueOption: {
+      padding: Spacing.md + 2,
+      borderRadius: Radius.md,
+      borderWidth: 1,
+      borderColor: colors.border,
+      marginBottom: Spacing.sm,
+      backgroundColor: colors.surface,
+    },
+    venueOptionSelected: {
+      borderColor: colors.primary,
+      backgroundColor: colors.surfaceAlt,
+    },
+    venueOptionName: {
+      ...Typography.bodyMedium,
+      color: colors.text,
+    },
+    venueOptionNameSelected: {
+      ...Typography.bodySemibold,
+      color: colors.primary,
+    },
+    venueOptionSuburb: {
+      ...Typography.caption,
+      color: colors.textMuted,
+      marginTop: 2,
+    },
+    venueOptionSuburbSelected: {
+      color: colors.textSecondary,
+    },
+    venuesLoader: {
+      marginTop: Spacing['3xl'],
+    },
+    emptyModal: {
+      paddingTop: Spacing['3xl'],
+      alignItems: 'center',
+    },
+  });
+}

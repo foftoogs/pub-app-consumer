@@ -1,16 +1,16 @@
-import { useState } from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  ActivityIndicator,
-} from 'react-native';
+import { useMemo, useState } from 'react';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
+
+import { Button } from '@/components/ui/button';
+import { Radius, Spacing, Typography, type ThemeColors } from '@/constants/theme';
+import { useThemeColors } from '@/hooks/use-theme-colors';
 import { useAuthStore } from '@/stores/auth';
 import { useNightsStore } from '@/stores/nights';
 
 export default function InviteAcceptScreen() {
+  const colors = useThemeColors();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { code } = useLocalSearchParams<{ code: string }>();
   const token = useAuthStore((s) => s.token);
   const setPendingInviteCode = useAuthStore((s) => s.setPendingInviteCode);
@@ -45,7 +45,7 @@ export default function InviteAcceptScreen() {
           <Text style={styles.iconText}>🎉</Text>
         </View>
 
-        <Text style={styles.title}>You've been invited!</Text>
+        <Text style={styles.title}>You&apos;ve been invited!</Text>
         <Text style={styles.subtitle}>
           Someone wants you to join their night out.
           {!token ? ' Sign in to accept the invite and see the details.' : ' Tap below to join.'}
@@ -53,92 +53,72 @@ export default function InviteAcceptScreen() {
 
         {error ? <Text style={styles.error}>{error}</Text> : null}
 
-        <TouchableOpacity
-          style={[styles.button, loading && styles.buttonDisabled]}
+        <Button
+          label={token ? 'Join this Night' : 'Sign in to Join'}
           onPress={handleJoin}
-          disabled={loading}
-        >
-          {loading ? (
-            <ActivityIndicator color="#fff" size="small" />
-          ) : (
-            <Text style={styles.buttonText}>
-              {token ? 'Join this Night' : 'Sign in to Join'}
-            </Text>
-          )}
-        </TouchableOpacity>
+          loading={loading}
+          fullWidth
+        />
 
         {token && (
-          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <Pressable style={styles.backButton} onPress={() => router.back()}>
             <Text style={styles.backButtonText}>Go back</Text>
-          </TouchableOpacity>
+          </Pressable>
         )}
       </View>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
-  inner: {
-    flex: 1,
-    justifyContent: 'center',
-    paddingHorizontal: 24,
-    alignItems: 'center',
-  },
-  iconCircle: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: '#f5f5f5',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 24,
-  },
-  iconText: {
-    fontSize: 36,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: '700',
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#666',
-    textAlign: 'center',
-    marginBottom: 32,
-    lineHeight: 22,
-  },
-  error: {
-    color: '#e74c3c',
-    fontSize: 14,
-    textAlign: 'center',
-    marginBottom: 16,
-  },
-  button: {
-    backgroundColor: '#000',
-    borderRadius: 12,
-    padding: 16,
-    alignItems: 'center',
-    width: '100%',
-  },
-  buttonDisabled: {
-    opacity: 0.5,
-  },
-  buttonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  backButton: {
-    marginTop: 16,
-  },
-  backButtonText: {
-    color: '#666',
-    fontSize: 14,
-  },
-});
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    inner: {
+      flex: 1,
+      justifyContent: 'center',
+      paddingHorizontal: Spacing.xl,
+      alignItems: 'center',
+    },
+    iconCircle: {
+      width: 80,
+      height: 80,
+      borderRadius: Radius.pill,
+      backgroundColor: colors.surfaceAlt,
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginBottom: Spacing.xl,
+    },
+    iconText: {
+      fontSize: 36,
+    },
+    title: {
+      ...Typography.displayMedium,
+      color: colors.text,
+      marginBottom: Spacing.sm,
+      textAlign: 'center',
+    },
+    subtitle: {
+      ...Typography.body,
+      color: colors.textSecondary,
+      textAlign: 'center',
+      marginBottom: Spacing['2xl'],
+    },
+    error: {
+      ...Typography.caption,
+      color: colors.error,
+      textAlign: 'center',
+      marginBottom: Spacing.base,
+    },
+    backButton: {
+      marginTop: Spacing.base,
+      paddingVertical: Spacing.sm,
+    },
+    backButtonText: {
+      ...Typography.caption,
+      color: colors.textSecondary,
+    },
+  });
+}
