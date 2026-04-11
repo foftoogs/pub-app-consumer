@@ -34,6 +34,29 @@ jest.mock('react-native-svg', () => {
   };
 });
 
+// Mock react-native-maps
+jest.mock('react-native-maps', () => {
+  const { View } = require('react-native');
+  const MockMapView = (props) => <View testID={props.testID} {...props} />;
+  MockMapView.Marker = (props) => <View {...props} />;
+  const MockMarker = (props) => <View {...props} />;
+  return {
+    __esModule: true,
+    default: MockMapView,
+    Marker: MockMarker,
+  };
+});
+
+// Mock expo-location
+jest.mock('expo-location', () => ({
+  requestForegroundPermissionsAsync: jest.fn(() =>
+    Promise.resolve({ status: 'granted' })
+  ),
+  getCurrentPositionAsync: jest.fn(() =>
+    Promise.resolve({ coords: { latitude: -37.8136, longitude: 144.9631 } })
+  ),
+}));
+
 // Mock react-native-safe-area-context
 jest.mock('react-native-safe-area-context', () => ({
   useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),
