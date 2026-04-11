@@ -10,6 +10,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import DraggableFlatList, {
   RenderItemParams,
@@ -153,11 +154,11 @@ export default function ItineraryScreen() {
             </View>
             {canEdit && (
               <View style={styles.cardActions}>
-                <View style={styles.dragHandle}>
-                  <Text style={styles.dragHandleText}>☰</Text>
+                <View testID={`drag-handle-${item.id}`} style={styles.dragHandle}>
+                  <Ionicons name="reorder-three" size={22} color={colors.textMuted} />
                 </View>
-                <Pressable style={styles.removeButton} onPress={() => handleRemove(item)}>
-                  <Text style={styles.removeButtonText}>×</Text>
+                <Pressable testID={`remove-itinerary-${item.id}`} style={styles.removeButton} onPress={() => handleRemove(item)}>
+                  <Ionicons name="close-circle" size={22} color={colors.error} />
                 </Pressable>
               </View>
             )}
@@ -412,21 +413,12 @@ function createStyles(colors: ThemeColors) {
     dragHandle: {
       padding: Spacing.sm,
     },
-    dragHandleText: {
-      fontSize: 20,
-      color: colors.textMuted,
-    },
     cardDragging: {
       backgroundColor: colors.surfaceAlt,
       ...Elevation.lg,
     },
     removeButton: {
       padding: Spacing.sm,
-    },
-    removeButtonText: {
-      fontSize: 20,
-      color: colors.textMuted,
-      fontWeight: '600',
     },
     listContent: {
       paddingBottom: 0,

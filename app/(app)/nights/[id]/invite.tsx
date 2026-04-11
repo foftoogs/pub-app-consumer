@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
+import { Ionicons } from '@expo/vector-icons';
 
 import { Button } from '@/components/ui/button';
 import { Radius, Spacing, Typography, type ThemeColors } from '@/constants/theme';
@@ -95,6 +96,11 @@ export default function InviteScreen() {
           style={({ pressed }) => [styles.copyButton, pressed && styles.copyButtonPressed]}
           onPress={() => handleCopy(item)}
         >
+          <Ionicons
+            name={copiedId === item.id ? 'checkmark-circle' : 'copy-outline'}
+            size={16}
+            color={colors.primary}
+          />
           <Text style={styles.copyButtonText}>
             {copiedId === item.id ? 'Copied!' : 'Copy Link'}
           </Text>
@@ -213,7 +219,10 @@ function createStyles(colors: ThemeColors) {
       backgroundColor: colors.surfaceAlt,
       borderRadius: Radius.sm,
       padding: Spacing.md,
+      flexDirection: 'row',
       alignItems: 'center',
+      justifyContent: 'center',
+      gap: Spacing.xs,
     },
     copyButtonPressed: {
       backgroundColor: colors.surfacePressed,

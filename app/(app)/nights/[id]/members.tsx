@@ -7,6 +7,7 @@ import {
   Text,
   View,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 
 import { Button } from '@/components/ui/button';
 import { TextField } from '@/components/ui/text-field';
@@ -131,8 +132,8 @@ export default function MembersScreen() {
       </View>
 
       {isOrganiser && item.role !== 'organiser' && (
-        <Pressable style={styles.removeButton} onPress={() => handleRemove(item)}>
-          <Text style={styles.removeButtonText}>×</Text>
+        <Pressable testID={`remove-member-${item.id}`} style={styles.removeButton} onPress={() => handleRemove(item)}>
+          <Ionicons name="close-circle" size={22} color={colors.error} />
         </Pressable>
       )}
     </View>
@@ -287,11 +288,6 @@ function createStyles(colors: ThemeColors) {
     removeButton: {
       padding: Spacing.sm,
       marginLeft: Spacing.sm,
-    },
-    removeButtonText: {
-      fontSize: 20,
-      color: colors.textMuted,
-      fontWeight: '600',
     },
     empty: {
       paddingTop: Spacing['4xl'],

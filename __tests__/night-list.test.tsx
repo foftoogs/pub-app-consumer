@@ -95,8 +95,8 @@ describe('NightListScreen', () => {
   });
 
   it('navigates to create on FAB press', () => {
-    const { getByText } = render(<NightListScreen />);
-    fireEvent.press(getByText('+'));
+    const { getByTestId } = render(<NightListScreen />);
+    fireEvent.press(getByTestId('create-night-fab'));
     expect(mockPush).toHaveBeenCalledWith('/(app)/nights/create');
   });
 
