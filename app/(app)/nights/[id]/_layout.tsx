@@ -1,6 +1,7 @@
 import { useEffect, useMemo } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { Tabs, useLocalSearchParams } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 
 import { Spacing, Typography, type ThemeColors } from '@/constants/theme';
 import { useThemeColors } from '@/hooks/use-theme-colors';
@@ -44,10 +45,42 @@ export default function NightDetailLayout() {
         headerShown: false,
       }}
     >
-      <Tabs.Screen name="index" options={{ title: 'Overview' }} />
-      <Tabs.Screen name="members" options={{ title: 'Members' }} />
-      <Tabs.Screen name="itinerary" options={{ title: 'Itinerary' }} />
-      <Tabs.Screen name="invite" options={{ title: 'Invite' }} />
+      <Tabs.Screen
+        name="index"
+        options={{
+          title: 'Overview',
+          tabBarIcon: ({ focused, color, size }) => (
+            <Ionicons name={focused ? 'grid' : 'grid-outline'} size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="members"
+        options={{
+          title: 'Members',
+          tabBarIcon: ({ focused, color, size }) => (
+            <Ionicons name={focused ? 'people' : 'people-outline'} size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="itinerary"
+        options={{
+          title: 'Itinerary',
+          tabBarIcon: ({ focused, color, size }) => (
+            <Ionicons name={focused ? 'map' : 'map-outline'} size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="invite"
+        options={{
+          title: 'Invite',
+          tabBarIcon: ({ focused, color, size }) => (
+            <Ionicons name={focused ? 'mail' : 'mail-outline'} size={size} color={color} />
+          ),
+        }}
+      />
     </Tabs>
   );
 }
