@@ -1,9 +1,8 @@
 /**
- * Branded colour palette for the consumer app.
+ * Branded colour palette for NitePool.
  *
- * Direction: electric violet primary + hot coral secondary.
- * Meant to evoke nightlife energy while staying legible on functional
- * screens like itineraries and member lists.
+ * Direction: deep purple → magenta gradient primary + pink-coral-orange secondary.
+ * Evokes nightlife energy while staying legible on functional screens.
  *
  * Light and dark objects must share the same keys — `useThemeColor`
  * relies on `keyof typeof Colors.light & keyof typeof Colors.dark`.
@@ -56,6 +55,16 @@ export const Palette = {
   warningDark: '#FBBF24',
   error: '#EF4444',
   errorDark: '#F87171',
+} as const;
+
+/** Gradient presets used on auth screens and branded surfaces. */
+export const Gradients = {
+  /** Deep purple → magenta background (matches NitePool brand). */
+  brand: ['#3B0764', '#7C3AED', '#C026D3'] as const,
+  /** Pink → orange CTA button. */
+  ctaButton: ['#EC4899', '#F97316'] as const,
+  /** Subtle violet wash for card overlays. */
+  cardOverlay: ['rgba(124, 58, 237, 0.08)', 'rgba(192, 38, 211, 0.04)'] as const,
 } as const;
 
 export const Colors = {

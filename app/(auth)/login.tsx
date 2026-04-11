@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import {
   KeyboardAvoidingView,
   Platform,
@@ -6,18 +6,20 @@ import {
   Text,
   View,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Button } from '@/components/ui/button';
+import { CityscapeIllustration } from '@/components/ui/cityscape-illustration';
+import { NitePoolLogo } from '@/components/ui/nitepool-logo';
 import { TextField } from '@/components/ui/text-field';
-import { Spacing, Typography, type ThemeColors } from '@/constants/theme';
-import { useThemeColors } from '@/hooks/use-theme-colors';
+import { Gradients, Palette } from '@/constants/colors';
+import { Radius, Spacing } from '@/constants/spacing';
+import { Typography } from '@/constants/typography';
 import api from '@/lib/api';
 
 export default function LoginScreen() {
-  const colors = useThemeColors();
-  const styles = useMemo(() => createStyles(colors), [colors]);
-
+  const insets = useSafeAreaInsets();
   const [email, setEmail] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -36,60 +38,138 @@ export default function LoginScreen() {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    <LinearGradient
+      colors={Gradients.brand}
+      style={styles.gradient}
+      start={{ x: 0.5, y: 0 }}
+      end={{ x: 0.5, y: 1 }}
     >
-      <View style={styles.inner}>
-        <Text style={styles.title}>Welcome</Text>
-        <Text style={styles.subtitle}>Enter your email to get started</Text>
+      <KeyboardAvoidingView
+        style={styles.flex}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
+        {/* Bottom illustration — rendered first so it sits behind the form */}
+        <View style={styles.illustrationContainer}>
+          <CityscapeIllustration height={200} />
+        </View>
 
-        <TextField
-          placeholder="Email address"
-          value={email}
-          onChangeText={setEmail}
-          keyboardType="email-address"
-          autoCapitalize="none"
-          autoCorrect={false}
-          error={error || undefined}
-          containerStyle={styles.field}
-        />
+        <View style={[styles.content, { paddingTop: insets.top + Spacing['2xl'] }]}>
+          {/* Logo + brand */}
+          <View style={styles.brandSection}>
+            <NitePoolLogo size={140} color="#FFFFFF" />
+            <Text style={styles.brandName}>NITEPOOL</Text>
+          </View>
 
-        <Button
-          label="Send code"
-          onPress={handleSendCode}
-          disabled={!email}
-          loading={loading}
-          fullWidth
-        />
-      </View>
-    </KeyboardAvoidingView>
+          {/* Login card */}
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>LOG IN</Text>
+
+            <TextField
+              label="Email address"
+              placeholder="name@example.com"
+              value={email}
+              onChangeText={setEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoCorrect={false}
+              error={error || undefined}
+              containerStyle={styles.field}
+            />
+
+            <GradientButton
+              label={loading ? 'Sending...' : 'Send code'}
+              onPress={handleSendCode}
+              disabled={!email || loading}
+            />
+          </View>
+        </View>
+      </KeyboardAvoidingView>
+    </LinearGradient>
   );
 }
 
-function createStyles(colors: ThemeColors) {
-  return StyleSheet.create({
-    container: {
-      flex: 1,
-      backgroundColor: colors.background,
-    },
-    inner: {
-      flex: 1,
-      justifyContent: 'center',
-      paddingHorizontal: Spacing.xl,
-    },
-    title: {
-      ...Typography.displayMedium,
-      color: colors.text,
-      marginBottom: Spacing.sm,
-    },
-    subtitle: {
-      ...Typography.body,
-      color: colors.textSecondary,
-      marginBottom: Spacing['2xl'],
-    },
-    field: {
-      marginBottom: Spacing.base,
-    },
-  });
+/** Gradient CTA button matching the pink → orange design. */
+function GradientButton({
+  label,
+  onPress,
+  disabled,
+}: {
+  label: string;
+  onPress: () => void;
+  disabled?: boolean;
+}) {
+  return (
+    <LinearGradient
+      colors={disabled ? ['#9CA3AF', '#9CA3AF'] : [...Gradients.ctaButton]}
+      start={{ x: 0, y: 0.5 }}
+      end={{ x: 1, y: 0.5 }}
+      style={[styles.gradientButton, disabled && styles.buttonDisabled]}
+    >
+      <Text
+        style={styles.gradientButtonLabel}
+        onPress={disabled ? undefined : onPress}
+      >
+        {label}
+      </Text>
+    </LinearGradient>
+  );
 }
+
+const styles = StyleSheet.create({
+  flex: {
+    flex: 1,
+  },
+  gradient: {
+    flex: 1,
+  },
+  content: {
+    flex: 1,
+    justifyContent: 'center',
+    paddingHorizontal: Spacing.xl,
+  },
+  brandSection: {
+    alignItems: 'center',
+    marginBottom: Spacing['3xl'],
+  },
+  brandName: {
+    ...Typography.heading,
+    color: '#FFFFFF',
+    letterSpacing: 4,
+    marginTop: Spacing.md,
+    fontWeight: '800',
+  },
+  card: {
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    borderRadius: Radius.xl,
+    padding: Spacing.xl,
+  },
+  cardTitle: {
+    ...Typography.displayMedium,
+    color: Palette.midnight[800],
+    textAlign: 'center',
+    marginBottom: Spacing.lg,
+  },
+  field: {
+    marginBottom: Spacing.base,
+  },
+  gradientButton: {
+    borderRadius: Radius.pill,
+    paddingVertical: Spacing.md + 2,
+    alignItems: 'center',
+    marginTop: Spacing.sm,
+  },
+  gradientButtonLabel: {
+    ...Typography.button,
+    color: '#FFFFFF',
+    textAlign: 'center',
+  },
+  buttonDisabled: {
+    opacity: 0.5,
+  },
+  illustrationContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+  },
+});

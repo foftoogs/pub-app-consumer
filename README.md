@@ -1,4 +1,4 @@
-# pub-app-consumer
+# NitePool
 
 Consumer-facing mobile app for planning nights out. Built with React Native and Expo.
 

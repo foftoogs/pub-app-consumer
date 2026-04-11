@@ -7,7 +7,7 @@
  * (`colors.ts` / `typography.ts` / `spacing.ts`) and re-export here.
  */
 
-export { Colors, Palette } from './colors';
+export { Colors, Gradients, Palette } from './colors';
 export type { ColorScheme, ColorToken, ThemeColors } from './colors';
 
 export { Fonts, Typography } from './typography';
