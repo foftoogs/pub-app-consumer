@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { AppState, AppStateStatus } from 'react-native';
 
-import { useAuthStore } from '@/stores/auth';
+import { useAuthStore } from '@/features/auth/store';
 
 const TIMEOUT_MS = 10 * 60 * 1000; // 10 minutes
 

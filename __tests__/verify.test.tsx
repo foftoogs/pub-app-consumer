@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, fireEvent, waitFor } from '@testing-library/react-native';
 import VerifyScreen from '../app/(auth)/verify';
-import { useAuthStore } from '../stores/auth';
+import { useAuthStore } from '../features/auth/store';
 
 jest.mock('expo-secure-store', () => ({
   getItemAsync: jest.fn(() => Promise.resolve(null)),
@@ -27,7 +27,7 @@ jest.mock('../lib/api', () => ({
 }));
 
 import api from '../lib/api';
-import { useNightsStore } from '../stores/nights';
+import { useNightsStore } from '../features/nights/store';
 
 const mockApi = api as jest.Mocked<typeof api>;
 

@@ -1,4 +1,4 @@
-import { useAuthStore } from '../stores/auth';
+import { useAuthStore } from '../features/auth/store';
 
 const mockSecureStore: Record<string, string> = {};
 

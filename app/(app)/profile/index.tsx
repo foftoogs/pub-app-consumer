@@ -10,7 +10,7 @@ import {
   type ThemeColors,
 } from '@/constants/theme';
 import { useThemeColors } from '@/hooks/use-theme-colors';
-import { useAuthStore } from '@/stores/auth';
+import { useAuthStore } from '@/features/auth/store';
 
 function getInitials(name: string): string {
   return name

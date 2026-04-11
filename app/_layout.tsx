@@ -8,7 +8,7 @@ import 'react-native-reanimated';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useInactivityTimeout } from '@/hooks/use-inactivity-timeout';
-import { useAuthStore } from '@/stores/auth';
+import { useAuthStore } from '@/features/auth/store';
 
 function buildNavigationTheme(scheme: 'light' | 'dark'): Theme {
   const base = scheme === 'dark' ? DarkTheme : DefaultTheme;

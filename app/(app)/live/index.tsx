@@ -5,8 +5,8 @@ import { router } from 'expo-router';
 
 import { Radius, Spacing, Typography, type ThemeColors } from '@/constants/theme';
 import { useThemeColors } from '@/hooks/use-theme-colors';
-import { useNightsStore } from '@/stores/nights';
-import { Itinerary, Night } from '@/types/night';
+import { useNightsStore } from '@/features/nights/store';
+import { Itinerary, Night } from '@/features/nights/types';
 
 function getCurrentStopIndex(itinerary: Itinerary[]): number {
   const now = new Date();

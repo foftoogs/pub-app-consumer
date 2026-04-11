@@ -6,9 +6,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { Button } from '@/components/ui/button';
 import { Radius, Spacing, Typography, type ThemeColors } from '@/constants/theme';
 import { useThemeColors } from '@/hooks/use-theme-colors';
-import { useAuthStore } from '@/stores/auth';
-import { useNightsStore } from '@/stores/nights';
-import { NightInvite } from '@/types/night';
+import { useAuthStore } from '@/features/auth/store';
+import { useNightsStore } from '@/features/nights/store';
+import { NightInvite } from '@/features/nights/types';
 
 function inviteStatusColor(colors: ThemeColors, status: NightInvite['status']) {
   switch (status) {

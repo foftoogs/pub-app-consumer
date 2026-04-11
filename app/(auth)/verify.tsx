@@ -18,8 +18,8 @@ import { Gradients, Palette } from '@/constants/colors';
 import { Radius, Spacing } from '@/constants/spacing';
 import { Typography } from '@/constants/typography';
 import api from '@/lib/api';
-import { useAuthStore } from '@/stores/auth';
-import { useNightsStore } from '@/stores/nights';
+import { useAuthStore } from '@/features/auth/store';
+import { useNightsStore } from '@/features/nights/store';
 
 export default function VerifyScreen() {
   const insets = useSafeAreaInsets();

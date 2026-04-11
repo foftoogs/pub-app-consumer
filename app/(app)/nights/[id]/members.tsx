@@ -13,9 +13,9 @@ import { Button } from '@/components/ui/button';
 import { TextField } from '@/components/ui/text-field';
 import { Radius, Spacing, Typography, type ThemeColors } from '@/constants/theme';
 import { useThemeColors } from '@/hooks/use-theme-colors';
-import { useAuthStore } from '@/stores/auth';
-import { useNightsStore } from '@/stores/nights';
-import { NightMember } from '@/types/night';
+import { useAuthStore } from '@/features/auth/store';
+import { useNightsStore } from '@/features/nights/store';
+import { NightMember } from '@/features/nights/types';
 
 const RSVP_OPTIONS: NightMember['rsvp_status'][] = ['going', 'maybe', 'declined'];
 

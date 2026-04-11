@@ -33,11 +33,13 @@ This is the **consumer-facing** mobile app (Expo SDK 54, React Native 0.81, Reac
 
 ### State (Zustand)
 
-Three stores in `stores/`, all talking to `lib/api.ts` directly:
+Domain code is grouped under `features/`, each with its own store and types:
 
-- **`auth.ts`** — owns `consumer`, `token`, `isReady`, `pendingInviteCode`. Persists only the token via `expo-secure-store` under key `consumer_token`; the `consumer` object is rehydrated by calling `/consumer/me` in `hydrate()`. On 401 it clears the token and sets an `error` message. Root layout's redirect depends on `isReady`, so any auth change must flow through this store.
-- **`nights.ts`** — owns the nights list, `currentNight`, and all night-related mutations (members, itinerary reorder/remove, invites). Mutations optimistically update `currentNight` in-place, guarded by `currentNight?.id === nightId` checks — preserve that pattern when adding new mutations or stale updates will clobber unrelated nights. API responses are unwrapped defensively (`data.night ?? data`, `data.data ?? data.nights ?? data`) because the backend wraps some endpoints and not others.
-- **`venues.ts`** — owns the venues list, loading state, and `fetchVenues` action. Separated from nights because venues are a shared resource used by both the itinerary venue picker and the standalone venues browse screen.
+- **`features/auth/store.ts`** — owns `consumer`, `token`, `isReady`, `pendingInviteCode`. Persists only the token via `expo-secure-store` under key `consumer_token`; the `consumer` object is rehydrated by calling `/consumer/me` in `hydrate()`. On 401 it clears the token and sets an `error` message. Root layout's redirect depends on `isReady`, so any auth change must flow through this store. Types in `features/auth/types.ts`.
+- **`features/nights/store.ts`** — owns the nights list, `currentNight`, and all night-related mutations (members, itinerary reorder/remove, invites). Mutations optimistically update `currentNight` in-place, guarded by `currentNight?.id === nightId` checks — preserve that pattern when adding new mutations or stale updates will clobber unrelated nights. API responses are unwrapped defensively (`data.night ?? data`, `data.data ?? data.nights ?? data`) because the backend wraps some endpoints and not others. Types in `features/nights/types.ts`.
+- **`features/venues/store.ts`** — owns the venues list, loading state, and `fetchVenues` action. Separated from nights because venues are a shared resource used by both the itinerary venue picker and the standalone venues browse screen.
+
+Shared code stays at the top level: `components/`, `hooks/`, `lib/`, `constants/`.
 
 Don't call `api` directly from screens; go through a store action so tests can mock the store.
 
@@ -47,7 +49,7 @@ Don't call `api` directly from screens; go through a store action so tests can m
 
 ### Path alias
 
-`@/*` maps to the repo root (`tsconfig.json`). Use `@/stores/...`, `@/lib/api`, `@/types/night`, etc.
+`@/*` maps to the repo root (`tsconfig.json`). Use `@/features/auth/store`, `@/features/nights/types`, `@/lib/api`, etc.
 
 ### Theming
 
@@ -57,5 +59,5 @@ Don't call `api` directly from screens; go through a store action so tests can m
 
 - Jest preset is `jest-expo`; `jest.setup.js` globally mocks `expo-secure-store` so auth code runs in tests without native modules.
 - `transformIgnorePatterns` in `package.json` already whitelists `zustand`, `axios`, `@sentry/react-native`, etc. If you add a dep that ships ESM, extend that list rather than mocking it.
-- Component tests use `@testing-library/react-native` and typically mock the store hooks (`jest.mock('@/stores/nights')`) rather than the axios layer — match that style in new tests.
+- Component tests use `@testing-library/react-native` and typically mock the store hooks (`jest.mock('@/features/nights/store')`) rather than the axios layer — match that style in new tests.
 - Tests live in top-level `__tests__/` (not colocated).

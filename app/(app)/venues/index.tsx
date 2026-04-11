@@ -16,8 +16,8 @@ import {
   type ThemeColors,
 } from '@/constants/theme';
 import { useThemeColors } from '@/hooks/use-theme-colors';
-import { useVenuesStore } from '@/stores/venues';
-import { Venue } from '@/types/night';
+import { useVenuesStore } from '@/features/venues/store';
+import { Venue } from '@/features/nights/types';
 
 export default function VenuesScreen() {
   const colors = useThemeColors();

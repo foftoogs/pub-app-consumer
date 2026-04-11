@@ -5,8 +5,8 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { Button } from '@/components/ui/button';
 import { Radius, Spacing, Typography, type ThemeColors } from '@/constants/theme';
 import { useThemeColors } from '@/hooks/use-theme-colors';
-import { useAuthStore } from '@/stores/auth';
-import { useNightsStore } from '@/stores/nights';
+import { useAuthStore } from '@/features/auth/store';
+import { useNightsStore } from '@/features/nights/store';
 
 export default function InviteAcceptScreen() {
   const colors = useThemeColors();

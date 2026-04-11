@@ -1,8 +1,8 @@
 import React from 'react';
 import { render, fireEvent, waitFor } from '@testing-library/react-native';
 import InviteAcceptScreen from '../app/invite/[code]';
-import { useNightsStore } from '../stores/nights';
-import { useAuthStore } from '../stores/auth';
+import { useNightsStore } from '../features/nights/store';
+import { useAuthStore } from '../features/auth/store';
 
 jest.mock('expo-secure-store', () => ({
   getItemAsync: jest.fn(() => Promise.resolve(null)),

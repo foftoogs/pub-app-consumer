@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import api from '@/lib/api';
-import { Venue } from '@/types/night';
+import { Venue } from '@/features/nights/types';
 
 interface VenuesStore {
   venues: Venue[];

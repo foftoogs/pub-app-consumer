@@ -5,7 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 
 import { Spacing, Typography, type ThemeColors } from '@/constants/theme';
 import { useThemeColors } from '@/hooks/use-theme-colors';
-import { useNightsStore } from '@/stores/nights';
+import { useNightsStore } from '@/features/nights/store';
 
 export default function NightDetailLayout() {
   const { id } = useLocalSearchParams<{ id: string }>();

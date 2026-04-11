@@ -5,9 +5,9 @@ import { router } from 'expo-router';
 import { Button } from '@/components/ui/button';
 import { Radius, Spacing, Typography, type ThemeColors } from '@/constants/theme';
 import { useThemeColors } from '@/hooks/use-theme-colors';
-import { useAuthStore } from '@/stores/auth';
-import { useNightsStore } from '@/stores/nights';
-import { Night } from '@/types/night';
+import { useAuthStore } from '@/features/auth/store';
+import { useNightsStore } from '@/features/nights/store';
+import { Night } from '@/features/nights/types';
 
 function statusColor(colors: ThemeColors, status: Night['status']) {
   switch (status) {

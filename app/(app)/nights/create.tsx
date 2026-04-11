@@ -15,7 +15,7 @@ import { Button } from '@/components/ui/button';
 import { TextField } from '@/components/ui/text-field';
 import { Radius, Spacing, Typography, type ThemeColors } from '@/constants/theme';
 import { useThemeColors } from '@/hooks/use-theme-colors';
-import { useNightsStore } from '@/stores/nights';
+import { useNightsStore } from '@/features/nights/store';
 
 type Step = 'name' | 'date' | 'theme' | 'budget';
 const STEPS: Step[] = ['name', 'date', 'theme', 'budget'];

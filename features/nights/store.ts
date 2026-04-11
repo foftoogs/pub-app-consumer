@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import api from '@/lib/api';
-import { Night, NightMember, NightInvite, Itinerary, CreateNightInput, UpdateNightInput, AddItineraryInput } from '@/types/night';
+import { Night, NightMember, NightInvite, Itinerary, CreateNightInput, UpdateNightInput, AddItineraryInput } from '@/features/nights/types';
 
 interface NightsStore {
   nights: Night[];
