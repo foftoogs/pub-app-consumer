@@ -1,4 +1,4 @@
-import { useNightsStore } from '../stores/nights';
+import { useNightsStore } from '../features/nights/store';
 
 jest.mock('expo-secure-store', () => ({
   getItemAsync: jest.fn(() => Promise.resolve(null)),

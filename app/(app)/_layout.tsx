@@ -4,8 +4,8 @@ import { getFocusedRouteNameFromRoute } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 
 import { useThemeColors } from '@/hooks/use-theme-colors';
-import { useNightsStore } from '@/stores/nights';
-import { Night } from '@/types/night';
+import { useNightsStore } from '@/features/nights/store';
+import { Night } from '@/features/nights/types';
 
 const TAB_ICONS: Record<string, { focused: string; default: string }> = {
   home: { focused: 'home', default: 'home-outline' },

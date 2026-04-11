@@ -1,8 +1,8 @@
 import React from 'react';
 import { render, fireEvent } from '@testing-library/react-native';
 import HomeScreen from '../app/(app)/home/index';
-import { useAuthStore } from '../stores/auth';
-import { useNightsStore } from '../stores/nights';
+import { useAuthStore } from '../features/auth/store';
+import { useNightsStore } from '../features/nights/store';
 
 jest.mock('expo-secure-store', () => ({
   getItemAsync: jest.fn(() => Promise.resolve(null)),

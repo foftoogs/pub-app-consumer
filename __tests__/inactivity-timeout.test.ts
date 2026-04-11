@@ -1,7 +1,7 @@
 import { renderHook, act, waitFor } from '@testing-library/react-native';
 import { AppState } from 'react-native';
 import { useInactivityTimeout } from '../hooks/use-inactivity-timeout';
-import { useAuthStore } from '../stores/auth';
+import { useAuthStore } from '../features/auth/store';
 
 jest.mock('expo-secure-store', () => ({
   getItemAsync: jest.fn(() => Promise.resolve(null)),

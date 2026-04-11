@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import * as SecureStore from 'expo-secure-store';
 import api from '@/lib/api';
-import { Consumer } from '@/types/consumer';
+import { Consumer } from '@/features/auth/types';
 
 interface AuthStore {
   consumer: Consumer | null;

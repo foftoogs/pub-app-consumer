@@ -18,8 +18,8 @@ import {
   type ThemeColors,
 } from '@/constants/theme';
 import { useThemeColors } from '@/hooks/use-theme-colors';
-import { useNightsStore } from '@/stores/nights';
-import { Night } from '@/types/night';
+import { useNightsStore } from '@/features/nights/store';
+import { Night } from '@/features/nights/types';
 
 function isUpcoming(night: Night) {
   return new Date(night.date) >= new Date(new Date().toDateString());

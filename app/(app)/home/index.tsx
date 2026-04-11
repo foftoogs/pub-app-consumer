@@ -12,8 +12,8 @@ import {
   type ThemeColors,
 } from '@/constants/theme';
 import { useThemeColors } from '@/hooks/use-theme-colors';
-import { useAuthStore } from '@/stores/auth';
-import { useNightsStore } from '@/stores/nights';
+import { useAuthStore } from '@/features/auth/store';
+import { useNightsStore } from '@/features/nights/store';
 
 const CARDS: {
   key: string;

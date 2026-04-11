@@ -1,8 +1,8 @@
 import React from 'react';
 import { render, fireEvent } from '@testing-library/react-native';
 import NightOverviewScreen from '../app/(app)/nights/[id]/index';
-import { useNightsStore } from '../stores/nights';
-import { useAuthStore } from '../stores/auth';
+import { useNightsStore } from '../features/nights/store';
+import { useAuthStore } from '../features/auth/store';
 import { Alert } from 'react-native';
 
 jest.mock('expo-secure-store', () => ({

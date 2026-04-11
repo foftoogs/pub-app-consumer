@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, fireEvent, waitFor } from '@testing-library/react-native';
 import NightListScreen from '../app/(app)/nights/index';
-import { useNightsStore } from '../stores/nights';
+import { useNightsStore } from '../features/nights/store';
 
 jest.mock('expo-secure-store', () => ({
   getItemAsync: jest.fn(() => Promise.resolve(null)),

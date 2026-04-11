@@ -28,10 +28,10 @@ import {
   type ThemeColors,
 } from '@/constants/theme';
 import { useThemeColors } from '@/hooks/use-theme-colors';
-import { useAuthStore } from '@/stores/auth';
-import { useNightsStore } from '@/stores/nights';
-import { useVenuesStore } from '@/stores/venues';
-import { Itinerary, Venue } from '@/types/night';
+import { useAuthStore } from '@/features/auth/store';
+import { useNightsStore } from '@/features/nights/store';
+import { useVenuesStore } from '@/features/venues/store';
+import { Itinerary, Venue } from '@/features/nights/types';
 
 const MAX_VENUES = 3;
 

@@ -2,9 +2,9 @@ import React from 'react';
 import { render, fireEvent, waitFor } from '@testing-library/react-native';
 import { Alert } from 'react-native';
 import ItineraryScreen from '../app/(app)/nights/[id]/itinerary';
-import { useNightsStore } from '../stores/nights';
-import { useAuthStore } from '../stores/auth';
-import { useVenuesStore } from '../stores/venues';
+import { useNightsStore } from '../features/nights/store';
+import { useAuthStore } from '../features/auth/store';
+import { useVenuesStore } from '../features/venues/store';
 
 jest.mock('expo-secure-store', () => ({
   getItemAsync: jest.fn(() => Promise.resolve(null)),
