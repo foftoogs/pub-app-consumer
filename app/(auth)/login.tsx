@@ -48,19 +48,19 @@ export default function LoginScreen() {
         style={styles.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-        {/* Bottom illustration — rendered first so it sits behind the form */}
+        {/* Cityscape behind the logo — absolutely positioned, starts from top */}
         <View style={styles.illustrationContainer}>
-          <CityscapeIllustration height={200} />
+          <CityscapeIllustration height={460} />
         </View>
 
         <View style={[styles.content, { paddingTop: insets.top + Spacing['2xl'] }]}>
-          {/* Logo + brand */}
+          {/* Logo + brand — sits on top of the cityscape */}
           <View style={styles.brandSection}>
             <NitePoolLogo size={140} color="#FFFFFF" />
             <Text style={styles.brandName}>NITEPOOL</Text>
           </View>
 
-          {/* Login card */}
+          {/* Login card — in front of everything */}
           <View style={styles.card}>
             <Text style={styles.cardTitle}>LOG IN</Text>
 
@@ -168,7 +168,7 @@ const styles = StyleSheet.create({
   },
   illustrationContainer: {
     position: 'absolute',
-    bottom: 0,
+    top: 0,
     left: 0,
     right: 0,
   },

@@ -72,9 +72,9 @@ export default function VerifyScreen() {
         style={styles.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-        {/* Bottom illustration — rendered first so it sits behind the form */}
+        {/* Cityscape behind the logo */}
         <View style={styles.illustrationContainer}>
-          <CityscapeIllustration height={200} />
+          <CityscapeIllustration height={460} />
         </View>
 
         <View style={[styles.content, { paddingTop: insets.top + Spacing['2xl'] }]}>
@@ -219,7 +219,7 @@ const styles = StyleSheet.create({
   },
   illustrationContainer: {
     position: 'absolute',
-    bottom: 0,
+    top: 0,
     left: 0,
     right: 0,
   },
