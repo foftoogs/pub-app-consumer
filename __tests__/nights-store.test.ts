@@ -1,4 +1,5 @@
 import { useNightsStore } from '../stores/nights';
+import { useVenuesStore } from '../stores/venues';
 
 jest.mock('expo-secure-store', () => ({
   getItemAsync: jest.fn(() => Promise.resolve(null)),
@@ -226,24 +227,24 @@ describe('nights store', () => {
     expect(useNightsStore.getState().currentNight).toBeNull();
   });
 
-  // --- Venue fetch error ---
+  // --- Venue fetch error (now in venues store) ---
 
   it('fetchVenues sets error on API failure', async () => {
     (mockApi.get as jest.Mock).mockRejectedValueOnce({
       response: { data: { message: 'Venue service down' } },
     });
 
-    await useNightsStore.getState().fetchVenues();
+    await useVenuesStore.getState().fetchVenues();
 
-    expect(useNightsStore.getState().error).toBe('Venue service down');
-    expect(useNightsStore.getState().venuesLoading).toBe(false);
+    expect(useVenuesStore.getState().error).toBe('Venue service down');
+    expect(useVenuesStore.getState().loading).toBe(false);
   });
 
   it('fetchVenues uses fallback error when no message', async () => {
     (mockApi.get as jest.Mock).mockRejectedValueOnce(new Error('oops'));
 
-    await useNightsStore.getState().fetchVenues();
+    await useVenuesStore.getState().fetchVenues();
 
-    expect(useNightsStore.getState().error).toBe('Failed to load venues');
+    expect(useVenuesStore.getState().error).toBe('Failed to load venues');
   });
 });

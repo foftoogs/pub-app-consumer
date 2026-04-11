@@ -1,4 +1,5 @@
 import { useNightsStore } from '../stores/nights';
+import { useVenuesStore } from '../stores/venues';
 
 jest.mock('expo-secure-store', () => ({
   getItemAsync: jest.fn(() => Promise.resolve(null)),
@@ -93,8 +94,10 @@ beforeEach(() => {
     nights: [],
     currentNight: null,
     loading: false,
+  });
+  useVenuesStore.setState({
     venues: [],
-    venuesLoading: false,
+    loading: false,
   });
   jest.clearAllMocks();
 });
@@ -103,17 +106,17 @@ describe('itinerary store actions', () => {
   it('fetchVenues populates venues array', async () => {
     (mockApi.get as jest.Mock).mockResolvedValueOnce({ data: { data: [mockVenue, mockVenue2] } });
 
-    await useNightsStore.getState().fetchVenues();
+    await useVenuesStore.getState().fetchVenues();
 
     expect(mockApi.get).toHaveBeenCalledWith('/consumer/venues', { params: {} });
-    expect(useNightsStore.getState().venues).toEqual([mockVenue, mockVenue2]);
-    expect(useNightsStore.getState().venuesLoading).toBe(false);
+    expect(useVenuesStore.getState().venues).toEqual([mockVenue, mockVenue2]);
+    expect(useVenuesStore.getState().loading).toBe(false);
   });
 
   it('fetchVenues passes search param', async () => {
     (mockApi.get as jest.Mock).mockResolvedValueOnce({ data: { data: [mockVenue] } });
 
-    await useNightsStore.getState().fetchVenues('local');
+    await useVenuesStore.getState().fetchVenues('local');
 
     expect(mockApi.get).toHaveBeenCalledWith('/consumer/venues', { params: { search: 'local' } });
   });

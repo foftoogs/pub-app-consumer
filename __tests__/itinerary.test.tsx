@@ -4,6 +4,7 @@ import { Alert } from 'react-native';
 import ItineraryScreen from '../app/(app)/nights/[id]/itinerary';
 import { useNightsStore } from '../stores/nights';
 import { useAuthStore } from '../stores/auth';
+import { useVenuesStore } from '../stores/venues';
 
 jest.mock('expo-secure-store', () => ({
   getItemAsync: jest.fn(() => Promise.resolve(null)),
@@ -135,8 +136,10 @@ beforeEach(() => {
     nights: [mockNight],
     currentNight: mockNight,
     loading: false,
+  });
+  useVenuesStore.setState({
     venues: [mockVenue, mockVenue2],
-    venuesLoading: false,
+    loading: false,
   });
   useAuthStore.setState({ consumer: organiser, token: 'token', isReady: true });
   jest.clearAllMocks();
@@ -286,8 +289,7 @@ describe('ItineraryScreen', () => {
     });
     (mockApi.post as jest.Mock).mockResolvedValueOnce({ data: { itinerary: newItem } });
 
-    useNightsStore.setState({
-      ...useNightsStore.getState(),
+    useVenuesStore.setState({
       venues: [{ ...mockVenue, id: 'venue-3', name: 'New Bar', suburb: 'CBD' }],
     });
 
