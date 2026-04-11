@@ -24,7 +24,9 @@ This is the **consumer-facing** mobile app (Expo SDK 54, React Native 0.81, Reac
 
 - `app/_layout.tsx` is the auth gate. It calls `useAuthStore.hydrate()` on mount, shows a spinner until `isReady`, then redirects based on `token` and current `segments[0]`: no token → `(auth)/login`; token + in `(auth)` → `(app)/nights`. The `invite` group is exempt from the redirect so deep links work while logged out.
 - `app/(auth)/` — `login.tsx`, `verify.tsx` (phone/OTP-style flow).
-- `app/(app)/nights/` — authenticated stack. `[id]/_layout.tsx` is a **Tabs** layout (Overview / Members / Itinerary / Invite) that fetches the night in its own `useEffect`; each tab screen reads `currentNight` from the store rather than fetching itself.
+- `app/(app)/_layout.tsx` — **Bottom Tabs** navigator (Events, Venues, Profile, Settings). The main tab bar hides when viewing a night detail (which has its own tabs). Uses `getFocusedRouteNameFromRoute` to detect nested navigation depth.
+- `app/(app)/nights/` — Events tab. Stack with list, create, and `[id]` detail. `[id]/_layout.tsx` is a **Tabs** layout (Overview / Members / Itinerary / Invite) that fetches the night in its own `useEffect`; each tab screen reads `currentNight` from the store rather than fetching itself.
+- `app/(app)/venues/`, `app/(app)/profile/`, `app/(app)/settings/` — Placeholder tab sections (each with a Stack layout and index screen).
 - `app/invite/[code].tsx` — deep-link landing (scheme `nitepool` per `app.json`). If the user is unauthenticated it stashes the code in `authStore.pendingInviteCode` and routes to login; the login/verify flow is responsible for consuming that pending code after successful auth.
 
 `typedRoutes` is enabled in `app.json`, so route strings are type-checked — prefer template literals like `` `/(app)/nights/${id}` `` over string concatenation.
