@@ -119,4 +119,131 @@ describe('nights store', () => {
     useNightsStore.getState().clearCurrentNight();
     expect(useNightsStore.getState().currentNight).toBeNull();
   });
+
+  // --- Error branch coverage ---
+
+  it('fetchNights sets error on API failure', async () => {
+    (mockApi.get as jest.Mock).mockRejectedValueOnce({
+      response: { data: { message: 'Server error' } },
+    });
+
+    await useNightsStore.getState().fetchNights();
+
+    expect(useNightsStore.getState().error).toBe('Server error');
+    expect(useNightsStore.getState().loading).toBe(false);
+  });
+
+  it('fetchNights uses fallback error when no message', async () => {
+    (mockApi.get as jest.Mock).mockRejectedValueOnce(new Error('network'));
+
+    await useNightsStore.getState().fetchNights();
+
+    expect(useNightsStore.getState().error).toBe('Failed to load nights');
+  });
+
+  it('fetchNight sets error on API failure', async () => {
+    (mockApi.get as jest.Mock).mockRejectedValueOnce({
+      response: { data: { message: 'Not found' } },
+    });
+
+    await useNightsStore.getState().fetchNight('bad-id');
+
+    expect(useNightsStore.getState().error).toBe('Not found');
+    expect(useNightsStore.getState().loading).toBe(false);
+  });
+
+  it('fetchNight uses fallback error when no message', async () => {
+    (mockApi.get as jest.Mock).mockRejectedValueOnce(new Error('timeout'));
+
+    await useNightsStore.getState().fetchNight('bad-id');
+
+    expect(useNightsStore.getState().error).toBe('Failed to load night');
+  });
+
+  // --- Alternative API response shapes ---
+
+  it('fetchNights handles unwrapped array response', async () => {
+    (mockApi.get as jest.Mock).mockResolvedValueOnce({ data: [mockNight] });
+
+    await useNightsStore.getState().fetchNights();
+
+    expect(useNightsStore.getState().nights).toEqual([mockNight]);
+  });
+
+  it('fetchNights handles { nights: [...] } shape', async () => {
+    (mockApi.get as jest.Mock).mockResolvedValueOnce({ data: { nights: [mockNight] } });
+
+    await useNightsStore.getState().fetchNights();
+
+    expect(useNightsStore.getState().nights).toEqual([mockNight]);
+  });
+
+  it('fetchNight handles unwrapped object response', async () => {
+    (mockApi.get as jest.Mock).mockResolvedValueOnce({ data: mockNight });
+
+    await useNightsStore.getState().fetchNight('night-1');
+
+    expect(useNightsStore.getState().currentNight).toEqual(mockNight);
+  });
+
+  // --- Mismatched night ID guards ---
+
+  it('updateNight does not clobber currentNight for different ID', async () => {
+    const otherNight = { ...mockNight, id: 'night-other', name: 'Other' };
+    const updated = { ...mockNight, name: 'Updated' };
+    (mockApi.put as jest.Mock).mockResolvedValueOnce({ data: { night: updated } });
+
+    useNightsStore.setState({ nights: [mockNight], currentNight: otherNight });
+    await useNightsStore.getState().updateNight('night-1', { name: 'Updated' });
+
+    // currentNight should remain the other night
+    expect(useNightsStore.getState().currentNight?.id).toBe('night-other');
+    expect(useNightsStore.getState().currentNight?.name).toBe('Other');
+    // But the nights list should be updated
+    expect(useNightsStore.getState().nights[0].name).toBe('Updated');
+  });
+
+  it('deleteNight does not clear currentNight for different ID', async () => {
+    const otherNight = { ...mockNight, id: 'night-other' };
+    (mockApi.delete as jest.Mock).mockResolvedValueOnce({});
+
+    useNightsStore.setState({ nights: [mockNight, otherNight], currentNight: otherNight });
+    await useNightsStore.getState().deleteNight('night-1');
+
+    expect(useNightsStore.getState().currentNight?.id).toBe('night-other');
+    expect(useNightsStore.getState().nights).toHaveLength(1);
+  });
+
+  // --- Member mutations without currentNight ---
+
+  it('removeMember is a no-op when currentNight is null', async () => {
+    (mockApi.delete as jest.Mock).mockResolvedValueOnce({});
+
+    useNightsStore.setState({ currentNight: null });
+    await useNightsStore.getState().removeMember('member-1');
+
+    expect(mockApi.delete).toHaveBeenCalled();
+    expect(useNightsStore.getState().currentNight).toBeNull();
+  });
+
+  // --- Venue fetch error ---
+
+  it('fetchVenues sets error on API failure', async () => {
+    (mockApi.get as jest.Mock).mockRejectedValueOnce({
+      response: { data: { message: 'Venue service down' } },
+    });
+
+    await useNightsStore.getState().fetchVenues();
+
+    expect(useNightsStore.getState().error).toBe('Venue service down');
+    expect(useNightsStore.getState().venuesLoading).toBe(false);
+  });
+
+  it('fetchVenues uses fallback error when no message', async () => {
+    (mockApi.get as jest.Mock).mockRejectedValueOnce(new Error('oops'));
+
+    await useNightsStore.getState().fetchVenues();
+
+    expect(useNightsStore.getState().error).toBe('Failed to load venues');
+  });
 });

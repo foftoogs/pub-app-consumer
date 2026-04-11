@@ -27,6 +27,7 @@ jest.mock('../lib/api', () => ({
 }));
 
 import api from '../lib/api';
+import { useNightsStore } from '../stores/nights';
 
 const mockApi = api as jest.Mocked<typeof api>;
 
@@ -96,5 +97,53 @@ describe('VerifyScreen', () => {
     const { getByText } = render(<VerifyScreen />);
     fireEvent.press(getByText('Use a different email'));
     expect(mockBack).toHaveBeenCalled();
+  });
+
+  it('accepts pending invite after verify and navigates to night', async () => {
+    useAuthStore.setState({ pendingInviteCode: 'invite-abc' });
+
+    // First call: verify-otp, second call: accept invite
+    (mockApi.post as jest.Mock)
+      .mockResolvedValueOnce({ data: { consumer: mockConsumer, token: 'tok-1' } })
+      .mockResolvedValueOnce({ data: { night_id: 'night-99' } });
+
+    const { getByPlaceholderText, getByText } = render(<VerifyScreen />);
+    fireEvent.changeText(getByPlaceholderText('000000'), '123456');
+    fireEvent.press(getByText('Verify'));
+
+    await waitFor(() => {
+      expect(mockApi.post).toHaveBeenCalledWith('/consumer/invites/invite-abc/accept');
+      expect(mockReplace).toHaveBeenCalledWith('/(app)/nights/night-99');
+    });
+
+    expect(useAuthStore.getState().pendingInviteCode).toBeNull();
+  });
+
+  it('clears pending invite and falls back to home if accept fails', async () => {
+    useAuthStore.setState({ pendingInviteCode: 'invite-bad' });
+
+    (mockApi.post as jest.Mock)
+      .mockResolvedValueOnce({ data: { consumer: mockConsumer, token: 'tok-2' } })
+      .mockRejectedValueOnce(new Error('Invite expired'));
+
+    const { getByPlaceholderText, getByText } = render(<VerifyScreen />);
+    fireEvent.changeText(getByPlaceholderText('000000'), '654321');
+    fireEvent.press(getByText('Verify'));
+
+    await waitFor(() => {
+      expect(mockReplace).toHaveBeenCalledWith('/(app)/home');
+    });
+
+    expect(useAuthStore.getState().pendingInviteCode).toBeNull();
+  });
+
+  it('shows fallback error message when response has no message', async () => {
+    (mockApi.post as jest.Mock).mockRejectedValueOnce(new Error('Network error'));
+
+    const { getByPlaceholderText, getByText, findByText } = render(<VerifyScreen />);
+    fireEvent.changeText(getByPlaceholderText('000000'), '111111');
+    fireEvent.press(getByText('Verify'));
+
+    expect(await findByText('Invalid or expired code')).toBeTruthy();
   });
 });
