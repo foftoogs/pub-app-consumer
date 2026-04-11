@@ -51,7 +51,7 @@ export default function RootLayout() {
     if (!token && !inAuthGroup && !inInvite) {
       router.replace('/(auth)/login');
     } else if (token && inAuthGroup) {
-      router.replace('/(app)/nights');
+      router.replace('/(app)/home');
     }
   }, [token, isReady, segments]);
 

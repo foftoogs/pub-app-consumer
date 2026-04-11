@@ -72,7 +72,7 @@ describe('VerifyScreen', () => {
         email: 'test@example.com',
         code: '123456',
       });
-      expect(mockReplace).toHaveBeenCalledWith('/(app)/nights');
+      expect(mockReplace).toHaveBeenCalledWith('/(app)/home');
     });
 
     const state = useAuthStore.getState();
