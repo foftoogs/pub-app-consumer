@@ -30,6 +30,7 @@ import {
 import { useThemeColors } from '@/hooks/use-theme-colors';
 import { useAuthStore } from '@/stores/auth';
 import { useNightsStore } from '@/stores/nights';
+import { useVenuesStore } from '@/stores/venues';
 import { Itinerary, Venue } from '@/types/night';
 
 const MAX_VENUES = 3;
@@ -59,9 +60,9 @@ export default function ItineraryScreen() {
   const colors = useThemeColors();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const night = useNightsStore((s) => s.currentNight);
-  const venues = useNightsStore((s) => s.venues);
-  const venuesLoading = useNightsStore((s) => s.venuesLoading);
-  const fetchVenues = useNightsStore((s) => s.fetchVenues);
+  const venues = useVenuesStore((s) => s.venues);
+  const venuesLoading = useVenuesStore((s) => s.loading);
+  const fetchVenues = useVenuesStore((s) => s.fetchVenues);
   const addItineraryItem = useNightsStore((s) => s.addItineraryItem);
   const reorderItinerary = useNightsStore((s) => s.reorderItinerary);
   const removeItineraryItem = useNightsStore((s) => s.removeItineraryItem);

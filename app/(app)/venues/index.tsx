@@ -16,13 +16,13 @@ import {
   type ThemeColors,
 } from '@/constants/theme';
 import { useThemeColors } from '@/hooks/use-theme-colors';
-import { useNightsStore } from '@/stores/nights';
+import { useVenuesStore } from '@/stores/venues';
 import { Venue } from '@/types/night';
 
 export default function VenuesScreen() {
   const colors = useThemeColors();
   const styles = useMemo(() => createStyles(colors), [colors]);
-  const { venues, venuesLoading, fetchVenues } = useNightsStore();
+  const { venues, loading: venuesLoading, fetchVenues } = useVenuesStore();
   const [search, setSearch] = useState('');
 
   useEffect(() => {

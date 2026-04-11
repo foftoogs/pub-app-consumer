@@ -1,14 +1,12 @@
 import { create } from 'zustand';
 import api from '@/lib/api';
-import { Night, NightMember, NightInvite, Venue, Itinerary, CreateNightInput, UpdateNightInput, AddItineraryInput } from '@/types/night';
+import { Night, NightMember, NightInvite, Itinerary, CreateNightInput, UpdateNightInput, AddItineraryInput } from '@/types/night';
 
 interface NightsStore {
   nights: Night[];
   currentNight: Night | null;
   loading: boolean;
   error: string | null;
-  venues: Venue[];
-  venuesLoading: boolean;
   fetchNights: () => Promise<void>;
   fetchNight: (id: string) => Promise<void>;
   createNight: (data: CreateNightInput) => Promise<Night>;
@@ -18,7 +16,6 @@ interface NightsStore {
   addMember: (nightId: string, consumerId: string) => Promise<NightMember>;
   updateMemberRsvp: (memberId: string, rsvpStatus: NightMember['rsvp_status']) => Promise<NightMember>;
   removeMember: (memberId: string) => Promise<void>;
-  fetchVenues: (search?: string) => Promise<void>;
   addItineraryItem: (nightId: string, input: AddItineraryInput) => Promise<Itinerary>;
   reorderItinerary: (nightId: string, itemIds: string[]) => Promise<void>;
   removeItineraryItem: (nightId: string, itemId: string) => Promise<void>;
@@ -31,8 +28,6 @@ export const useNightsStore = create<NightsStore>((set, get) => ({
   currentNight: null,
   loading: false,
   error: null,
-  venues: [],
-  venuesLoading: false,
 
   fetchNights: async () => {
     set({ loading: true, error: null });
@@ -134,20 +129,6 @@ export const useNightsStore = create<NightsStore>((set, get) => ({
         },
       };
     });
-  },
-
-  fetchVenues: async (search) => {
-    set({ venuesLoading: true, error: null });
-    try {
-      const params: Record<string, string> = {};
-      if (search) params.search = search;
-      const { data } = await api.get('/consumer/venues', { params });
-      set({ venues: data.data ?? data.venues ?? data });
-    } catch (err: any) {
-      set({ error: err.response?.data?.message ?? 'Failed to load venues' });
-    } finally {
-      set({ venuesLoading: false });
-    }
   },
 
   addItineraryItem: async (nightId, input) => {

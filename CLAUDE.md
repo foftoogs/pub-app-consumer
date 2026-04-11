@@ -33,12 +33,13 @@ This is the **consumer-facing** mobile app (Expo SDK 54, React Native 0.81, Reac
 
 ### State (Zustand)
 
-Two stores, both in `stores/`, both talking to `lib/api.ts` directly:
+Three stores in `stores/`, all talking to `lib/api.ts` directly:
 
 - **`auth.ts`** — owns `consumer`, `token`, `isReady`, `pendingInviteCode`. Persists only the token via `expo-secure-store` under key `consumer_token`; the `consumer` object is rehydrated by calling `/consumer/me` in `hydrate()`. On 401 it clears the token and sets an `error` message. Root layout's redirect depends on `isReady`, so any auth change must flow through this store.
-- **`nights.ts`** — owns the nights list, `currentNight`, venues, and all night-related mutations (members, itinerary reorder/remove, invites). Mutations optimistically update `currentNight` in-place, guarded by `currentNight?.id === nightId` checks — preserve that pattern when adding new mutations or stale updates will clobber unrelated nights. API responses are unwrapped defensively (`data.night ?? data`, `data.data ?? data.nights ?? data`) because the backend wraps some endpoints and not others.
+- **`nights.ts`** — owns the nights list, `currentNight`, and all night-related mutations (members, itinerary reorder/remove, invites). Mutations optimistically update `currentNight` in-place, guarded by `currentNight?.id === nightId` checks — preserve that pattern when adding new mutations or stale updates will clobber unrelated nights. API responses are unwrapped defensively (`data.night ?? data`, `data.data ?? data.nights ?? data`) because the backend wraps some endpoints and not others.
+- **`venues.ts`** — owns the venues list, loading state, and `fetchVenues` action. Separated from nights because venues are a shared resource used by both the itinerary venue picker and the standalone venues browse screen.
 
-Don't add a third store for night-scoped data — extend `nights.ts`. Don't call `api` directly from screens; go through a store action so tests can mock the store.
+Don't call `api` directly from screens; go through a store action so tests can mock the store.
 
 ### API client
 
