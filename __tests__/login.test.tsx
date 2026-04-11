@@ -31,7 +31,7 @@ beforeEach(() => {
 describe('LoginScreen', () => {
   it('renders email input and send code button', () => {
     const { getByPlaceholderText, getByText } = render(<LoginScreen />);
-    expect(getByPlaceholderText('Email address')).toBeTruthy();
+    expect(getByPlaceholderText('name@example.com')).toBeTruthy();
     expect(getByText('Send code')).toBeTruthy();
   });
 
@@ -45,7 +45,7 @@ describe('LoginScreen', () => {
     (mockApi.post as jest.Mock).mockResolvedValueOnce({ data: { message: 'OTP sent' } });
 
     const { getByPlaceholderText, getByText } = render(<LoginScreen />);
-    fireEvent.changeText(getByPlaceholderText('Email address'), 'test@example.com');
+    fireEvent.changeText(getByPlaceholderText('name@example.com'), 'test@example.com');
     fireEvent.press(getByText('Send code'));
 
     await waitFor(() => {
@@ -65,7 +65,7 @@ describe('LoginScreen', () => {
     });
 
     const { getByPlaceholderText, getByText, findByText } = render(<LoginScreen />);
-    fireEvent.changeText(getByPlaceholderText('Email address'), 'bad@email');
+    fireEvent.changeText(getByPlaceholderText('name@example.com'), 'bad@email');
     fireEvent.press(getByText('Send code'));
 
     expect(await findByText('Invalid email address')).toBeTruthy();
