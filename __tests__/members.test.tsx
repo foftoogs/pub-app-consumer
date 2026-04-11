@@ -183,15 +183,16 @@ describe('MembersScreen', () => {
   });
 
   it('shows remove button only for non-organiser members (organiser view)', () => {
-    const { getAllByText } = render(<MembersScreen />);
-    // Only 1 remove button (for the regular member, not the organiser)
-    expect(getAllByText('×').length).toBe(1);
+    const { queryByTestId } = render(<MembersScreen />);
+    // Only non-organiser member (member-2) has a remove button
+    expect(queryByTestId('remove-member-member-2')).toBeTruthy();
+    expect(queryByTestId('remove-member-member-1')).toBeNull();
   });
 
   it('shows confirmation on remove press', () => {
     const alertSpy = jest.spyOn(Alert, 'alert');
-    const { getByText } = render(<MembersScreen />);
-    fireEvent.press(getByText('×'));
+    const { getByTestId } = render(<MembersScreen />);
+    fireEvent.press(getByTestId('remove-member-member-2'));
     expect(alertSpy).toHaveBeenCalledWith(
       'Remove Member',
       'Remove Regular Member from this night?',

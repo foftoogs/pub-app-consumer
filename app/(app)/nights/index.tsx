@@ -8,6 +8,7 @@ import {
   View,
 } from 'react-native';
 import { router } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 
 import {
   Elevation,
@@ -133,10 +134,11 @@ export default function NightListScreen() {
       />
 
       <Pressable
+        testID="create-night-fab"
         style={({ pressed }) => [styles.fab, pressed && styles.fabPressed]}
         onPress={() => router.push('/(app)/nights/create')}
       >
-        <Text style={styles.fabText}>+</Text>
+        <Ionicons name="add" size={28} color={colors.textOnPrimary} />
       </Pressable>
     </View>
   );
@@ -260,11 +262,6 @@ function createStyles(colors: ThemeColors) {
     },
     fabPressed: {
       transform: [{ scale: 0.95 }],
-    },
-    fabText: {
-      color: colors.textOnPrimary,
-      fontSize: 28,
-      lineHeight: 30,
     },
   });
 }

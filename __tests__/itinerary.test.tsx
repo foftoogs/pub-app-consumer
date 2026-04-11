@@ -217,9 +217,9 @@ describe('ItineraryScreen', () => {
 
   it('hides empty slots and controls for non-organiser', () => {
     useAuthStore.setState({ consumer: memberConsumer });
-    const { queryByText, queryAllByText } = render(<ItineraryScreen />);
+    const { queryByText, queryByTestId } = render(<ItineraryScreen />);
     expect(queryByText('+ Add venue')).toBeNull();
-    expect(queryAllByText('×')).toHaveLength(0);
+    expect(queryByTestId('remove-itinerary-itin-1')).toBeNull();
     expect(queryByText('Move up')).toBeNull();
   });
 
@@ -227,20 +227,21 @@ describe('ItineraryScreen', () => {
     useNightsStore.setState({
       currentNight: { ...mockNight, status: 'active' },
     });
-    const { queryByText, queryAllByText } = render(<ItineraryScreen />);
+    const { queryByText, queryByTestId } = render(<ItineraryScreen />);
     expect(queryByText('+ Add venue')).toBeNull();
-    expect(queryAllByText('×')).toHaveLength(0);
+    expect(queryByTestId('remove-itinerary-itin-1')).toBeNull();
   });
 
   it('shows remove buttons for organiser in planning', () => {
-    const { getAllByText } = render(<ItineraryScreen />);
-    expect(getAllByText('×')).toHaveLength(2);
+    const { getByTestId } = render(<ItineraryScreen />);
+    expect(getByTestId('remove-itinerary-itin-1')).toBeTruthy();
+    expect(getByTestId('remove-itinerary-itin-2')).toBeTruthy();
   });
 
   it('shows confirmation dialog on remove press', () => {
     const alertSpy = jest.spyOn(Alert, 'alert');
-    const { getAllByText } = render(<ItineraryScreen />);
-    fireEvent.press(getAllByText('×')[0]);
+    const { getByTestId } = render(<ItineraryScreen />);
+    fireEvent.press(getByTestId('remove-itinerary-itin-1'));
     expect(alertSpy).toHaveBeenCalledWith(
       'Remove Venue',
       'Remove The Local Pub from the itinerary?',
@@ -249,15 +250,15 @@ describe('ItineraryScreen', () => {
   });
 
   it('shows drag handles for organiser in planning', () => {
-    const { getAllByText } = render(<ItineraryScreen />);
-    const handles = getAllByText('☰');
-    expect(handles).toHaveLength(2);
+    const { getByTestId } = render(<ItineraryScreen />);
+    expect(getByTestId('drag-handle-itin-1')).toBeTruthy();
+    expect(getByTestId('drag-handle-itin-2')).toBeTruthy();
   });
 
   it('hides drag handles for non-organiser', () => {
     useAuthStore.setState({ consumer: memberConsumer });
-    const { queryAllByText } = render(<ItineraryScreen />);
-    expect(queryAllByText('☰')).toHaveLength(0);
+    const { queryByTestId } = render(<ItineraryScreen />);
+    expect(queryByTestId('drag-handle-itin-1')).toBeNull();
   });
 
   it('opens venue picker modal on empty slot press', () => {
