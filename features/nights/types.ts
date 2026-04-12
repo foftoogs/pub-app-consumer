@@ -9,6 +9,20 @@ export interface NightMember {
   updated_at: string;
 }
 
+export interface OpeningHours {
+  [day: string]: { open: string; close: string };
+}
+
+export interface VenueAvailability {
+  id: string;
+  venue_id: string;
+  date: string;
+  time_slot: string;
+  spots_total: number;
+  spots_remaining: number;
+  notes: string | null;
+}
+
 export interface Venue {
   id: string;
   name: string;
@@ -21,7 +35,15 @@ export interface Venue {
   phone: string | null;
   email: string | null;
   description: string | null;
-  is_active: boolean;
+  type: string | null;
+  vibe_tags: string[] | null;
+  price_tier: number | null;
+  capacity: number | null;
+  dress_code: string | null;
+  opening_hours: OpeningHours | null;
+  cover_image_url: string | null;
+  distance?: number;
+  availability?: VenueAvailability[];
 }
 
 export interface Itinerary {
