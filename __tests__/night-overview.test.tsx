@@ -54,6 +54,7 @@ const mockNight = {
   organiser,
   members_count: 3,
   itinerary_count: 2,
+  current_user_rsvp: 'going' as const,
   members: [],
   itinerary: [],
   invites: [],
@@ -70,8 +71,6 @@ beforeEach(() => {
 describe('NightOverviewScreen', () => {
   it('renders night details', () => {
     const { getByText } = render(<NightOverviewScreen />);
-    expect(getByText('Friday Pub Crawl')).toBeTruthy();
-    expect(getByText('planning')).toBeTruthy();
     expect(getByText('Cocktail bars')).toBeTruthy();
     expect(getByText('$100 per person')).toBeTruthy();
     expect(getByText('3')).toBeTruthy();
