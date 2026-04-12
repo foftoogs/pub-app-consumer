@@ -7,22 +7,6 @@ import { Radius, Spacing, Typography, type ThemeColors } from '@/constants/theme
 import { useThemeColors } from '@/hooks/use-theme-colors';
 import { useAuthStore } from '@/features/auth/store';
 import { useNightsStore } from '@/features/nights/store';
-import { Night } from '@/features/nights/types';
-
-function statusColor(colors: ThemeColors, status: Night['status']) {
-  switch (status) {
-    case 'planning':
-      return colors.info;
-    case 'active':
-      return colors.success;
-    case 'closed':
-      return colors.textMuted;
-    case 'cancelled':
-      return colors.error;
-    default:
-      return colors.textMuted;
-  }
-}
 
 export default function NightOverviewScreen() {
   const colors = useThemeColors();
@@ -51,13 +35,6 @@ export default function NightOverviewScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>{night.name}</Text>
-        <View style={[styles.statusChip, { backgroundColor: statusColor(colors, night.status) }]}>
-          <Text style={styles.statusText}>{night.status}</Text>
-        </View>
-      </View>
-
       {isOrganiser && (
         <View style={styles.badge}>
           <Text style={styles.badgeText}>Organiser</Text>
@@ -115,29 +92,6 @@ function createStyles(colors: ThemeColors) {
       flex: 1,
       backgroundColor: colors.background,
       padding: Spacing.xl,
-    },
-    header: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      marginBottom: Spacing.sm,
-    },
-    title: {
-      ...Typography.heading,
-      color: colors.text,
-      flex: 1,
-      marginRight: Spacing.md,
-    },
-    statusChip: {
-      paddingHorizontal: Spacing.md,
-      paddingVertical: Spacing.xs,
-      borderRadius: Radius.md,
-    },
-    statusText: {
-      ...Typography.label,
-      color: colors.textOnPrimary,
-      textTransform: 'capitalize',
-      letterSpacing: 0,
     },
     badge: {
       alignSelf: 'flex-start',

@@ -69,6 +69,35 @@ export interface Night {
   updated_at: string;
 }
 
+export interface KittyContribution {
+  id: string;
+  consumer: Consumer;
+  amount: string;
+  status: 'pending' | 'confirmed' | 'failed' | 'refunded';
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Kitty {
+  id: string;
+  night_id: string;
+  total_balance: string;
+  currency: string;
+  status: 'open' | 'closed';
+  contributions: KittyContribution[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SpendLimit {
+  id: string;
+  max_amount: string;
+  current_spend: string;
+  alert_threshold: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface CreateNightInput {
   name: string;
   date: string;
