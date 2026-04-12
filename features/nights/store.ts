@@ -246,16 +246,16 @@ export const useNightsStore = create<NightsStore>((set, get) => ({
   respondToNight: async (nightId, rsvpStatus) => {
     await api.post(`/consumer/nights/${nightId}/respond`, { rsvp_status: rsvpStatus });
     const currentUserId = useAuthStore.getState().consumer?.id;
-    const updateMembers = (members: NightMember[]) =>
-      members.map((m) =>
+    const updateMembers = (members?: NightMember[]) =>
+      members?.map((m) =>
         m.consumer.id === currentUserId ? { ...m, rsvp_status: rsvpStatus } : m
       );
     set((state) => ({
       nights: state.nights.map((n) =>
-        n.id === nightId ? { ...n, current_user_rsvp: rsvpStatus, members: updateMembers(n.members) } : n
+        n.id === nightId ? { ...n, current_user_rsvp: rsvpStatus, members: updateMembers(n.members) ?? n.members } : n
       ),
       currentNight: state.currentNight?.id === nightId
-        ? { ...state.currentNight, current_user_rsvp: rsvpStatus, members: updateMembers(state.currentNight.members) }
+        ? { ...state.currentNight, current_user_rsvp: rsvpStatus, members: updateMembers(state.currentNight.members) ?? state.currentNight.members }
         : state.currentNight,
     }));
   },

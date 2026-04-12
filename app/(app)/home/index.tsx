@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -40,9 +40,18 @@ export default function HomeScreen() {
   const styles = useMemo(() => createStyles(colors), [colors]);
   const consumer = useAuthStore((s) => s.consumer);
   const nights = useNightsStore((s) => s.nights);
+  const fetchNights = useNightsStore((s) => s.fetchNights);
+
+  useEffect(() => {
+    fetchNights();
+  }, []);
 
   const upcomingCount = nights.filter(
     (n) => new Date(n.date) >= new Date(new Date().toDateString())
+  ).length;
+
+  const pendingCount = nights.filter(
+    (n) => n.current_user_rsvp === 'pending'
   ).length;
 
   const firstName = consumer?.name?.split(' ')[0] ?? '';
@@ -53,6 +62,19 @@ export default function HomeScreen() {
         <Text style={styles.greeting}>{getGreeting()},</Text>
         <Text style={styles.name}>{firstName}</Text>
       </View>
+
+      {pendingCount > 0 && (
+        <Pressable
+          style={({ pressed }) => [styles.inviteBanner, pressed && styles.inviteBannerPressed]}
+          onPress={() => router.push('/(app)/nights')}
+        >
+          <Ionicons name="mail-outline" size={20} color={colors.warning} />
+          <Text style={styles.inviteBannerText}>
+            You have {pendingCount} {pendingCount === 1 ? 'invite' : 'invites'} waiting
+          </Text>
+          <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
+        </Pressable>
+      )}
 
       <View style={styles.grid}>
         {CARDS.map((card) => (
@@ -93,6 +115,25 @@ function createStyles(colors: ThemeColors) {
     name: {
       ...Typography.displayMedium,
       color: colors.text,
+    },
+    inviteBanner: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: colors.surface,
+      borderRadius: Radius.lg,
+      padding: Spacing.base,
+      marginBottom: Spacing.base,
+      borderWidth: 1,
+      borderColor: colors.warning,
+      gap: Spacing.sm,
+    },
+    inviteBannerPressed: {
+      backgroundColor: colors.surfacePressed,
+    },
+    inviteBannerText: {
+      ...Typography.bodyMedium,
+      color: colors.text,
+      flex: 1,
     },
     grid: {
       flexDirection: 'row',
