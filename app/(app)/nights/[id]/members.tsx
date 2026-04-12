@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Alert,
   FlatList,
@@ -14,6 +14,7 @@ import { TextField } from '@/components/ui/text-field';
 import { Radius, Spacing, Typography, type ThemeColors } from '@/constants/theme';
 import { useThemeColors } from '@/hooks/use-theme-colors';
 import { useAuthStore } from '@/features/auth/store';
+import { Consumer } from '@/features/auth/types';
 import { useNightsStore } from '@/features/nights/store';
 import { NightMember } from '@/features/nights/types';
 
@@ -43,28 +44,63 @@ export default function MembersScreen() {
   const colors = useThemeColors();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const night = useNightsStore((s) => s.currentNight);
-  const addMember = useNightsStore((s) => s.addMember);
+  const addMemberByIdentifier = useNightsStore((s) => s.addMemberByIdentifier);
+  const addMemberById = useNightsStore((s) => s.addMemberById);
+  const fetchPreviousMembers = useNightsStore((s) => s.fetchPreviousMembers);
   const updateMemberRsvp = useNightsStore((s) => s.updateMemberRsvp);
   const removeMember = useNightsStore((s) => s.removeMember);
   const consumer = useAuthStore((s) => s.consumer);
 
   const [showAddInput, setShowAddInput] = useState(false);
-  const [consumerId, setConsumerId] = useState('');
+  const [identifier, setIdentifier] = useState('');
   const [addLoading, setAddLoading] = useState(false);
   const [addError, setAddError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
+  const [suggestions, setSuggestions] = useState<Consumer[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+
+  // Fetch previous members when add input is shown or search query changes
+  useEffect(() => {
+    if (!showAddInput || !night) return;
+    const query = identifier.trim();
+    fetchPreviousMembers(query || undefined, night.id).then(setSuggestions);
+  }, [identifier, showAddInput, night?.id]);
 
   if (!night) return null;
 
   const isOrganiser = night.organiser.id === consumer?.id;
 
-  const handleAddMember = async () => {
-    if (!consumerId.trim()) return;
+  const handleSelectSuggestion = async (selected: Consumer) => {
     setAddError('');
+    setSuccessMessage('');
+    setAddLoading(true);
+    setShowSuggestions(false);
+    try {
+      await addMemberById(night.id, selected.id);
+      setIdentifier('');
+      setShowAddInput(false);
+    } catch (err: any) {
+      setAddError(err.response?.data?.message ?? 'Failed to add member');
+    } finally {
+      setAddLoading(false);
+    }
+  };
+
+  const handleAddMember = async () => {
+    const value = identifier.trim();
+    if (!value) return;
+    setAddError('');
+    setSuccessMessage('');
     setAddLoading(true);
     try {
-      await addMember(night.id, consumerId.trim());
-      setConsumerId('');
-      setShowAddInput(false);
+      const result = await addMemberByIdentifier(night.id, value);
+      if (result.invited) {
+        setSuccessMessage(result.message ?? 'Invite sent!');
+        setIdentifier('');
+      } else {
+        setIdentifier('');
+        setShowAddInput(false);
+      }
     } catch (err: any) {
       setAddError(err.response?.data?.message ?? 'Failed to add member');
     } finally {
@@ -139,6 +175,21 @@ export default function MembersScreen() {
     </View>
   );
 
+  const renderSuggestion = ({ item }: { item: Consumer }) => (
+    <Pressable
+      style={styles.suggestionRow}
+      onPress={() => handleSelectSuggestion(item)}
+    >
+      <View style={styles.suggestionAvatar}>
+        <Text style={styles.suggestionAvatarText}>{getInitials(item.name)}</Text>
+      </View>
+      <View style={styles.suggestionInfo}>
+        <Text style={styles.suggestionName}>{item.name}</Text>
+        <Text style={styles.suggestionDetail}>{item.email}</Text>
+      </View>
+    </Pressable>
+  );
+
   return (
     <View style={styles.container}>
       <FlatList
@@ -158,28 +209,59 @@ export default function MembersScreen() {
           {showAddInput ? (
             <View>
               <TextField
-                placeholder="Consumer ID"
-                value={consumerId}
-                onChangeText={setConsumerId}
+                placeholder="Email or mobile number"
+                value={identifier}
+                onChangeText={(text) => {
+                  setIdentifier(text);
+                  setShowSuggestions(true);
+                  setAddError('');
+                  setSuccessMessage('');
+                }}
+                onFocus={() => setShowSuggestions(true)}
                 autoFocus
+                autoCapitalize="none"
+                keyboardType="email-address"
                 error={addError || undefined}
                 containerStyle={styles.addField}
               />
+
+              {successMessage ? (
+                <View style={styles.successBanner}>
+                  <Ionicons name="checkmark-circle" size={18} color={colors.success} />
+                  <Text style={styles.successText}>{successMessage}</Text>
+                </View>
+              ) : null}
+
+              {showSuggestions && suggestions.length > 0 && (
+                <View style={styles.suggestionsContainer}>
+                  <Text style={styles.suggestionsLabel}>Previous members</Text>
+                  <FlatList
+                    data={suggestions}
+                    keyExtractor={(item) => item.id}
+                    renderItem={renderSuggestion}
+                    style={styles.suggestionsList}
+                    keyboardShouldPersistTaps="handled"
+                  />
+                </View>
+              )}
+
               <View style={styles.addButtons}>
                 <Button
                   label="Cancel"
                   variant="outline"
                   onPress={() => {
                     setShowAddInput(false);
-                    setConsumerId('');
+                    setIdentifier('');
                     setAddError('');
+                    setSuccessMessage('');
+                    setShowSuggestions(false);
                   }}
                   style={styles.flexButton}
                 />
                 <Button
                   label="Add"
                   onPress={handleAddMember}
-                  disabled={!consumerId.trim()}
+                  disabled={!identifier.trim()}
                   loading={addLoading}
                   style={styles.flexButton}
                 />
@@ -311,6 +393,72 @@ function createStyles(colors: ThemeColors) {
     },
     flexButton: {
       flex: 1,
+    },
+    successBanner: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: Spacing.sm,
+      paddingVertical: Spacing.sm,
+      paddingHorizontal: Spacing.md,
+      backgroundColor: colors.surfaceAlt,
+      borderRadius: Radius.sm,
+      marginBottom: Spacing.sm,
+    },
+    successText: {
+      ...Typography.caption,
+      color: colors.success,
+      flex: 1,
+    },
+    suggestionsContainer: {
+      maxHeight: 200,
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: Radius.sm,
+      marginBottom: Spacing.sm,
+      backgroundColor: colors.surface,
+    },
+    suggestionsLabel: {
+      ...Typography.label,
+      color: colors.textMuted,
+      paddingHorizontal: Spacing.md,
+      paddingTop: Spacing.sm,
+      paddingBottom: Spacing.xs,
+    },
+    suggestionsList: {
+      maxHeight: 160,
+    },
+    suggestionRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingVertical: Spacing.sm,
+      paddingHorizontal: Spacing.md,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+    },
+    suggestionAvatar: {
+      width: 32,
+      height: 32,
+      borderRadius: Radius.pill,
+      backgroundColor: colors.surfaceAlt,
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginRight: Spacing.sm,
+    },
+    suggestionAvatarText: {
+      ...Typography.label,
+      color: colors.primary,
+    },
+    suggestionInfo: {
+      flex: 1,
+    },
+    suggestionName: {
+      ...Typography.bodySemibold,
+      color: colors.text,
+      fontSize: 14,
+    },
+    suggestionDetail: {
+      ...Typography.caption,
+      color: colors.textMuted,
     },
   });
 }

@@ -1,4 +1,4 @@
-import { Consumer } from './consumer';
+import { Consumer } from '@/features/auth/types';
 
 export interface NightMember {
   id: string;

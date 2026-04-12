@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import api from '@/lib/api';
+import { Consumer } from '@/features/auth/types';
 import { Night, NightMember, NightInvite, Itinerary, CreateNightInput, UpdateNightInput, AddItineraryInput } from '@/features/nights/types';
 
 interface NightsStore {
@@ -13,7 +14,10 @@ interface NightsStore {
   updateNight: (id: string, data: UpdateNightInput) => Promise<Night>;
   deleteNight: (id: string) => Promise<void>;
   clearCurrentNight: () => void;
-  addMember: (nightId: string, consumerId: string) => Promise<NightMember>;
+  addMemberByIdentifier: (nightId: string, identifier: string) => Promise<{ member?: NightMember; invited?: boolean; message?: string }>;
+  addMemberById: (nightId: string, consumerId: string) => Promise<NightMember>;
+  searchConsumers: (query: string) => Promise<Consumer[]>;
+  fetchPreviousMembers: (query?: string, nightId?: string) => Promise<Consumer[]>;
   updateMemberRsvp: (memberId: string, rsvpStatus: NightMember['rsvp_status']) => Promise<NightMember>;
   removeMember: (memberId: string) => Promise<void>;
   addItineraryItem: (nightId: string, input: AddItineraryInput) => Promise<Itinerary>;
@@ -80,7 +84,30 @@ export const useNightsStore = create<NightsStore>((set, get) => ({
 
   clearCurrentNight: () => set({ currentNight: null }),
 
-  addMember: async (nightId, consumerId) => {
+  addMemberByIdentifier: async (nightId, identifier) => {
+    const { data } = await api.post(`/consumer/nights/${nightId}/members`, {
+      identifier,
+    });
+
+    if (data.invited) {
+      return { invited: true, message: data.message };
+    }
+
+    const member = data.member ?? data;
+    set((state) => {
+      if (!state.currentNight || state.currentNight.id !== nightId) return state;
+      return {
+        currentNight: {
+          ...state.currentNight,
+          members: [...state.currentNight.members, member],
+          members_count: state.currentNight.members_count + 1,
+        },
+      };
+    });
+    return { member };
+  },
+
+  addMemberById: async (nightId, consumerId) => {
     const { data } = await api.post(`/consumer/nights/${nightId}/members`, {
       consumer_id: consumerId,
     });
@@ -96,6 +123,19 @@ export const useNightsStore = create<NightsStore>((set, get) => ({
       };
     });
     return member;
+  },
+
+  searchConsumers: async (query) => {
+    const { data } = await api.get('/consumer/search', { params: { q: query } });
+    return data.consumers ?? [];
+  },
+
+  fetchPreviousMembers: async (query, nightId) => {
+    const params: Record<string, string> = {};
+    if (query) params.q = query;
+    if (nightId) params.night_id = nightId;
+    const { data } = await api.get('/consumer/previous-members', { params });
+    return data.consumers ?? [];
   },
 
   updateMemberRsvp: async (memberId, rsvpStatus) => {
