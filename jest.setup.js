@@ -57,6 +57,31 @@ jest.mock('expo-location', () => ({
   ),
 }));
 
+// Mock expo-notifications
+jest.mock('expo-notifications', () => ({
+  setNotificationHandler: jest.fn(),
+  getPermissionsAsync: jest.fn(() =>
+    Promise.resolve({ status: 'granted' })
+  ),
+  requestPermissionsAsync: jest.fn(() =>
+    Promise.resolve({ status: 'granted' })
+  ),
+  getExpoPushTokenAsync: jest.fn(() =>
+    Promise.resolve({ data: 'ExponentPushToken[mock]' })
+  ),
+  addNotificationResponseReceivedListener: jest.fn(() => ({
+    remove: jest.fn(),
+  })),
+  removeNotificationSubscription: jest.fn(),
+  setNotificationChannelAsync: jest.fn(),
+  AndroidImportance: { HIGH: 4 },
+}));
+
+// Mock expo-device
+jest.mock('expo-device', () => ({
+  isDevice: false,
+}));
+
 // Mock react-native-safe-area-context
 jest.mock('react-native-safe-area-context', () => ({
   useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),

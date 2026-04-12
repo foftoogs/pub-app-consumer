@@ -6,6 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Radius, Spacing, Typography, type ThemeColors } from '@/constants/theme';
 import { useThemeColors } from '@/hooks/use-theme-colors';
 import { useNightsStore } from '@/features/nights/store';
+import { useLiveStore } from '@/features/live/store';
 import { Night } from '@/features/nights/types';
 
 function statusColor(colors: ThemeColors, status: Night['status']) {
@@ -24,12 +25,25 @@ function statusColor(colors: ThemeColors, status: Night['status']) {
 export default function NightDetailLayout() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { currentNight, loading, error, fetchNight } = useNightsStore();
+  const liveConnect = useLiveStore((s) => s.connect);
+  const liveDisconnect = useLiveStore((s) => s.disconnect);
+  const connectionStatus = useLiveStore((s) => s.connectionStatus);
   const colors = useThemeColors();
   const styles = useMemo(() => createStyles(colors), [colors]);
 
   useEffect(() => {
     if (id) fetchNight(id);
   }, [id]);
+
+  // Auto-connect to live channel when night is active
+  useEffect(() => {
+    if (currentNight?.status === 'active' && currentNight.id === id) {
+      liveConnect(currentNight.id);
+      return () => { liveDisconnect(); };
+    }
+  }, [currentNight?.status, currentNight?.id, id]);
+
+  const isActive = currentNight?.status === 'active';
 
   if (loading && !currentNight) {
     return (
@@ -52,8 +66,16 @@ export default function NightDetailLayout() {
       {currentNight && (
         <View style={styles.nightHeader}>
           <Text style={styles.nightName} numberOfLines={1}>{currentNight.name}</Text>
-          <View style={[styles.statusChip, { backgroundColor: statusColor(colors, currentNight.status) }]}>
-            <Text style={styles.statusText}>{currentNight.status}</Text>
+          <View style={styles.headerRight}>
+            {isActive && connectionStatus === 'connected' && (
+              <View style={[styles.connectionDot, { backgroundColor: colors.success }]} />
+            )}
+            {isActive && connectionStatus === 'connecting' && (
+              <ActivityIndicator size="small" color={colors.live} />
+            )}
+            <View style={[styles.statusChip, { backgroundColor: statusColor(colors, currentNight.status) }]}>
+              <Text style={styles.statusText}>{currentNight.status}</Text>
+            </View>
           </View>
         </View>
       )}
@@ -105,9 +127,32 @@ export default function NightDetailLayout() {
         }}
       />
       <Tabs.Screen
+        name="chat"
+        options={{
+          title: 'Chat',
+          href: isActive ? undefined : null,
+          tabBarIcon: ({ focused, color, size }) => (
+            <Ionicons name={focused ? 'chatbubbles' : 'chatbubbles-outline'} size={size} color={color} />
+          ),
+          tabBarActiveTintColor: isActive ? colors.live : undefined,
+        }}
+      />
+      <Tabs.Screen
+        name="live-map"
+        options={{
+          title: 'Map',
+          href: isActive ? undefined : null,
+          tabBarIcon: ({ focused, color, size }) => (
+            <Ionicons name={focused ? 'location' : 'location-outline'} size={size} color={color} />
+          ),
+          tabBarActiveTintColor: isActive ? colors.live : undefined,
+        }}
+      />
+      <Tabs.Screen
         name="invite"
         options={{
           title: 'Invite',
+          href: isActive ? null : undefined,
           tabBarIcon: ({ focused, color, size }) => (
             <Ionicons name={focused ? 'mail' : 'mail-outline'} size={size} color={color} />
           ),
@@ -139,6 +184,16 @@ function createStyles(colors: ThemeColors) {
       color: colors.text,
       flex: 1,
       marginRight: Spacing.sm,
+    },
+    headerRight: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: Spacing.sm,
+    },
+    connectionDot: {
+      width: 8,
+      height: 8,
+      borderRadius: 4,
     },
     statusChip: {
       paddingHorizontal: Spacing.md,
