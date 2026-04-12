@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, fireEvent, waitFor } from '@testing-library/react-native';
+import { render, fireEvent, waitFor, act } from '@testing-library/react-native';
 import { Alert } from 'react-native';
 import ItineraryScreen from '../app/(app)/nights/[id]/itinerary';
 import { useNightsStore } from '../features/nights/store';
@@ -140,14 +140,24 @@ beforeEach(() => {
   useVenuesStore.setState({
     venues: [mockVenue, mockVenue2],
     loading: false,
+    error: null,
+    fetchVenues: jest.fn(() => Promise.resolve()),
   });
   useAuthStore.setState({ consumer: organiser, token: 'token', isReady: true });
   jest.clearAllMocks();
 });
 
+// Helper: render and flush the async location useEffect to avoid act() warnings
+async function renderItinerary() {
+  const result = render(<ItineraryScreen />);
+  // Flush the expo-location promise chain that triggers setUserLocation
+  await act(async () => {});
+  return result;
+}
+
 describe('ItineraryScreen', () => {
-  it('renders itinerary items with venue names and stop numbers', () => {
-    const { getByText, getAllByText } = render(<ItineraryScreen />);
+  it('renders itinerary items with venue names and stop numbers', async () => {
+    const { getByText, getAllByText } = await renderItinerary();
     expect(getByText('The Local Pub')).toBeTruthy();
     expect(getByText('Cocktail Lounge')).toBeTruthy();
     // Stop badges + map marker labels both render numbers
@@ -155,53 +165,53 @@ describe('ItineraryScreen', () => {
     expect(getAllByText('2').length).toBeGreaterThanOrEqual(1);
   });
 
-  it('shows suburb on venue cards', () => {
-    const { getByText } = render(<ItineraryScreen />);
+  it('shows suburb on venue cards', async () => {
+    const { getByText } = await renderItinerary();
     expect(getByText('Richmond')).toBeTruthy();
     expect(getByText('Fitzroy')).toBeTruthy();
   });
 
-  it('shows arrival and departure times in chips', () => {
-    const { getByText } = render(<ItineraryScreen />);
+  it('shows arrival and departure times in chips', async () => {
+    const { getByText } = await renderItinerary();
     expect(getByText('18:00')).toBeTruthy();
     expect(getByText('20:00')).toBeTruthy();
   });
 
-  it('shows "No times set" when no times provided', () => {
-    const { getByText } = render(<ItineraryScreen />);
+  it('shows "No times set" when no times provided', async () => {
+    const { getByText } = await renderItinerary();
     expect(getByText('No times set')).toBeTruthy();
   });
 
-  it('shows venue address when available', () => {
-    const { getByText } = render(<ItineraryScreen />);
+  it('shows venue address when available', async () => {
+    const { getByText } = await renderItinerary();
     expect(getByText('123 Main St')).toBeTruthy();
   });
 
-  it('shows empty state when no itinerary items and not organiser', () => {
+  it('shows empty state when no itinerary items and not organiser', async () => {
     useAuthStore.setState({ consumer: memberConsumer });
     useNightsStore.setState({
       currentNight: { ...mockNight, itinerary: [], itinerary_count: 0 },
     });
-    const { getByText } = render(<ItineraryScreen />);
+    const { getByText } = await renderItinerary();
     expect(getByText('No venues added yet')).toBeTruthy();
   });
 
-  it('shows empty slot placeholders for organiser', () => {
-    const { getByText } = render(<ItineraryScreen />);
+  it('shows empty slot placeholders for organiser', async () => {
+    const { getByText } = await renderItinerary();
     // 2 filled + 1 empty slot = stop badge "3" on the empty slot
     expect(getByText('3')).toBeTruthy();
     expect(getByText('+ Add venue')).toBeTruthy();
   });
 
-  it('shows 3 empty slots when itinerary is empty for organiser', () => {
+  it('shows 3 empty slots when itinerary is empty for organiser', async () => {
     useNightsStore.setState({
       currentNight: { ...mockNight, itinerary: [], itinerary_count: 0 },
     });
-    const { getAllByText } = render(<ItineraryScreen />);
+    const { getAllByText } = await renderItinerary();
     expect(getAllByText('+ Add venue')).toHaveLength(3);
   });
 
-  it('hides empty slots when at 3-venue limit', () => {
+  it('hides empty slots when at 3-venue limit', async () => {
     const thirdItem = {
       ...mockItineraryItem,
       id: 'itin-3',
@@ -215,36 +225,36 @@ describe('ItineraryScreen', () => {
         itinerary_count: 3,
       },
     });
-    const { queryByText } = render(<ItineraryScreen />);
+    const { queryByText } = await renderItinerary();
     expect(queryByText('+ Add venue')).toBeNull();
   });
 
-  it('hides empty slots and controls for non-organiser', () => {
+  it('hides empty slots and controls for non-organiser', async () => {
     useAuthStore.setState({ consumer: memberConsumer });
-    const { queryByText, queryByTestId } = render(<ItineraryScreen />);
+    const { queryByText, queryByTestId } = await renderItinerary();
     expect(queryByText('+ Add venue')).toBeNull();
     expect(queryByTestId('remove-itinerary-itin-1')).toBeNull();
     expect(queryByText('Move up')).toBeNull();
   });
 
-  it('hides controls when night is not planning', () => {
+  it('hides controls when night is not planning', async () => {
     useNightsStore.setState({
       currentNight: { ...mockNight, status: 'active' },
     });
-    const { queryByText, queryByTestId } = render(<ItineraryScreen />);
+    const { queryByText, queryByTestId } = await renderItinerary();
     expect(queryByText('+ Add venue')).toBeNull();
     expect(queryByTestId('remove-itinerary-itin-1')).toBeNull();
   });
 
-  it('shows remove buttons for organiser in planning', () => {
-    const { getByTestId } = render(<ItineraryScreen />);
+  it('shows remove buttons for organiser in planning', async () => {
+    const { getByTestId } = await renderItinerary();
     expect(getByTestId('remove-itinerary-itin-1')).toBeTruthy();
     expect(getByTestId('remove-itinerary-itin-2')).toBeTruthy();
   });
 
-  it('shows confirmation dialog on remove press', () => {
+  it('shows confirmation dialog on remove press', async () => {
     const alertSpy = jest.spyOn(Alert, 'alert');
-    const { getByTestId } = render(<ItineraryScreen />);
+    const { getByTestId } = await renderItinerary();
     fireEvent.press(getByTestId('remove-itinerary-itin-1'));
     expect(alertSpy).toHaveBeenCalledWith(
       'Remove Venue',
@@ -253,21 +263,21 @@ describe('ItineraryScreen', () => {
     );
   });
 
-  it('shows drag handles for organiser in planning', () => {
-    const { getByTestId } = render(<ItineraryScreen />);
+  it('shows drag handles for organiser in planning', async () => {
+    const { getByTestId } = await renderItinerary();
     expect(getByTestId('drag-handle-itin-1')).toBeTruthy();
     expect(getByTestId('drag-handle-itin-2')).toBeTruthy();
   });
 
-  it('hides drag handles for non-organiser', () => {
+  it('hides drag handles for non-organiser', async () => {
     useAuthStore.setState({ consumer: memberConsumer });
-    const { queryByTestId } = render(<ItineraryScreen />);
+    const { queryByTestId } = await renderItinerary();
     expect(queryByTestId('drag-handle-itin-1')).toBeNull();
   });
 
-  it('opens venue picker modal on empty slot press', () => {
+  it('opens venue picker modal on empty slot press', async () => {
     (mockApi.get as jest.Mock).mockResolvedValueOnce({ data: { data: [] } });
-    const { getByText, getByPlaceholderText } = render(<ItineraryScreen />);
+    const { getByText, getByPlaceholderText } = await renderItinerary();
     fireEvent.press(getByText('+ Add venue'));
     expect(getByPlaceholderText('Search venues...')).toBeTruthy();
     expect(getByText('Add Venue')).toBeTruthy();
@@ -293,7 +303,7 @@ describe('ItineraryScreen', () => {
       venues: [{ ...mockVenue, id: 'venue-3', name: 'New Bar', suburb: 'CBD' }],
     });
 
-    const { getByText } = render(<ItineraryScreen />);
+    const { getByText } = await renderItinerary();
     fireEvent.press(getByText('+ Add venue'));
 
     await waitFor(() => {
@@ -312,9 +322,9 @@ describe('ItineraryScreen', () => {
     });
   });
 
-  it('returns null when no current night', () => {
+  it('returns null when no current night', async () => {
     useNightsStore.setState({ currentNight: null });
-    const { toJSON } = render(<ItineraryScreen />);
+    const { toJSON } = await renderItinerary();
     expect(toJSON()).toBeNull();
   });
 });

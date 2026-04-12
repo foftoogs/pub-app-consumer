@@ -63,3 +63,16 @@ jest.mock('react-native-safe-area-context', () => ({
   SafeAreaProvider: ({ children }) => children,
   SafeAreaView: ({ children }) => children,
 }));
+
+// Mock @expo/vector-icons to avoid async font loading that causes
+// act() warnings and prevents Jest from exiting cleanly.
+jest.mock('@expo/vector-icons', () => {
+  const { Text } = require('react-native');
+  const createIcon = () => (props) => <Text {...props}>{props.name}</Text>;
+  return {
+    Ionicons: createIcon(),
+    MaterialIcons: createIcon(),
+    FontAwesome: createIcon(),
+    Feather: createIcon(),
+  };
+});
