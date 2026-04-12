@@ -10,6 +10,7 @@ import {
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 
+import { Button } from '@/components/ui/button';
 import {
   Elevation,
   Radius,
@@ -42,7 +43,9 @@ export default function NightListScreen() {
   const colors = useThemeColors();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const { nights, loading, error, fetchNights } = useNightsStore();
+  const respondToNight = useNightsStore((s) => s.respondToNight);
   const [tab, setTab] = useState<'upcoming' | 'past'>('upcoming');
+  const [respondingNightId, setRespondingNightId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchNights();
@@ -52,36 +55,81 @@ export default function NightListScreen() {
     tab === 'upcoming' ? isUpcoming(n) : !isUpcoming(n)
   );
 
+  const handleRespond = async (nightId: string, rsvpStatus: 'going' | 'maybe' | 'declined') => {
+    setRespondingNightId(nightId);
+    try {
+      await respondToNight(nightId, rsvpStatus);
+      await fetchNights();
+    } finally {
+      setRespondingNightId(null);
+    }
+  };
+
   const renderNight = useCallback(
-    ({ item }: { item: Night }) => (
-      <Pressable
-        style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
-        onPress={() => router.push(`/(app)/nights/${item.id}`)}
-      >
-        <View style={styles.cardHeader}>
-          <Text style={styles.cardTitle} numberOfLines={1}>
-            {item.name}
-          </Text>
-          <View
-            style={[styles.statusChip, { backgroundColor: statusColor(colors, item.status) }]}
-          >
-            <Text style={styles.statusText}>{item.status}</Text>
+    ({ item }: { item: Night }) => {
+      const isPending = item.current_user_rsvp === 'pending';
+      return (
+        <Pressable
+          style={({ pressed }) => [styles.card, isPending && styles.cardPending, pressed && styles.cardPressed]}
+          onPress={() => !isPending && router.push(`/(app)/nights/${item.id}`)}
+        >
+          <View style={styles.cardHeader}>
+            <Text style={styles.cardTitle} numberOfLines={1}>
+              {item.name}
+            </Text>
+            {isPending ? (
+              <View style={[styles.statusChip, { backgroundColor: colors.warning }]}>
+                <Text style={styles.statusText}>invite</Text>
+              </View>
+            ) : (
+              <View
+                style={[styles.statusChip, { backgroundColor: statusColor(colors, item.status) }]}
+              >
+                <Text style={styles.statusText}>{item.status}</Text>
+              </View>
+            )}
           </View>
-        </View>
-        <Text style={styles.cardDate}>
-          {new Date(item.date).toLocaleDateString('en-AU', {
-            weekday: 'short',
-            day: 'numeric',
-            month: 'short',
-            year: 'numeric',
-          })}
-        </Text>
-        <Text style={styles.cardMeta}>
-          {item.members_count} {item.members_count === 1 ? 'member' : 'members'}
-        </Text>
-      </Pressable>
-    ),
-    [colors, styles]
+          <Text style={styles.cardDate}>
+            {new Date(item.date).toLocaleDateString('en-AU', {
+              weekday: 'short',
+              day: 'numeric',
+              month: 'short',
+              year: 'numeric',
+            })}
+          </Text>
+          <Text style={styles.cardMeta}>
+            Organised by {item.organiser.name} &middot; {item.members_count} {item.members_count === 1 ? 'member' : 'members'}
+          </Text>
+
+          {isPending && (
+            <View style={styles.respondRow}>
+              <Button
+                label="Join"
+                onPress={() => handleRespond(item.id, 'going')}
+                loading={respondingNightId === item.id}
+                disabled={respondingNightId !== null}
+                style={styles.respondButton}
+              />
+              <Button
+                label="Maybe"
+                variant="outline"
+                onPress={() => handleRespond(item.id, 'maybe')}
+                disabled={respondingNightId !== null}
+                style={styles.respondButton}
+              />
+              <Button
+                label="Decline"
+                variant="outline"
+                onPress={() => handleRespond(item.id, 'declined')}
+                disabled={respondingNightId !== null}
+                style={styles.respondButton}
+              />
+            </View>
+          )}
+        </Pressable>
+      );
+    },
+    [colors, styles, respondingNightId]
   );
 
   return (
@@ -182,6 +230,10 @@ function createStyles(colors: ThemeColors) {
       borderWidth: 1,
       borderColor: colors.border,
     },
+    cardPending: {
+      borderColor: colors.warning,
+      borderWidth: 2,
+    },
     cardPressed: {
       backgroundColor: colors.surfacePressed,
       transform: [{ scale: 0.99 }],
@@ -247,6 +299,14 @@ function createStyles(colors: ThemeColors) {
       ...Typography.caption,
       color: colors.error,
       textAlign: 'center',
+    },
+    respondRow: {
+      flexDirection: 'row',
+      gap: Spacing.sm,
+      marginTop: Spacing.md,
+    },
+    respondButton: {
+      flex: 1,
     },
     fab: {
       position: 'absolute',

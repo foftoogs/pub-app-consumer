@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import api from '@/lib/api';
+import { useAuthStore } from '@/features/auth/store';
 import { Consumer } from '@/features/auth/types';
 import { Night, NightMember, NightInvite, Itinerary, CreateNightInput, UpdateNightInput, AddItineraryInput } from '@/features/nights/types';
 
@@ -25,6 +26,8 @@ interface NightsStore {
   removeItineraryItem: (nightId: string, itemId: string) => Promise<void>;
   generateInvite: (nightId: string) => Promise<NightInvite>;
   acceptInvite: (code: string) => Promise<string>;
+  fetchInviteDetails: (code: string) => Promise<{ invite: NightInvite; night: Night }>;
+  respondToNight: (nightId: string, rsvpStatus: 'going' | 'maybe' | 'declined') => Promise<void>;
 }
 
 export const useNightsStore = create<NightsStore>((set, get) => ({
@@ -233,5 +236,27 @@ export const useNightsStore = create<NightsStore>((set, get) => ({
   acceptInvite: async (code) => {
     const { data } = await api.post(`/consumer/invites/${code}/accept`);
     return data.night_id;
+  },
+
+  fetchInviteDetails: async (code) => {
+    const { data } = await api.get(`/consumer/invites/${code}`);
+    return { invite: data.invite, night: data.night };
+  },
+
+  respondToNight: async (nightId, rsvpStatus) => {
+    await api.post(`/consumer/nights/${nightId}/respond`, { rsvp_status: rsvpStatus });
+    const currentUserId = useAuthStore.getState().consumer?.id;
+    const updateMembers = (members: NightMember[]) =>
+      members.map((m) =>
+        m.consumer.id === currentUserId ? { ...m, rsvp_status: rsvpStatus } : m
+      );
+    set((state) => ({
+      nights: state.nights.map((n) =>
+        n.id === nightId ? { ...n, current_user_rsvp: rsvpStatus, members: updateMembers(n.members) } : n
+      ),
+      currentNight: state.currentNight?.id === nightId
+        ? { ...state.currentNight, current_user_rsvp: rsvpStatus, members: updateMembers(state.currentNight.members) }
+        : state.currentNight,
+    }));
   },
 }));

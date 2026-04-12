@@ -22,6 +22,8 @@ const RSVP_OPTIONS: NightMember['rsvp_status'][] = ['going', 'maybe', 'declined'
 
 function rsvpColor(colors: ThemeColors, status: NightMember['rsvp_status']) {
   switch (status) {
+    case 'pending':
+      return colors.textMuted;
     case 'going':
       return colors.success;
     case 'maybe':

@@ -51,6 +51,7 @@ const upcomingNight = {
   organiser: mockConsumer,
   members_count: 2,
   itinerary_count: 0,
+  current_user_rsvp: 'going' as const,
   members: [],
   itinerary: [],
   invites: [],
@@ -82,7 +83,7 @@ describe('NightListScreen', () => {
     useNightsStore.setState({ nights: [upcomingNight] });
     const { getByText } = render(<NightListScreen />);
     expect(getByText('Upcoming Night')).toBeTruthy();
-    expect(getByText('2 members')).toBeTruthy();
+    expect(getByText(/2 members/)).toBeTruthy();
   });
 
   it('switches to past tab and shows past nights', () => {
