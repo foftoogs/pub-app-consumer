@@ -1,10 +1,10 @@
-import { Consumer } from './consumer';
+import { Consumer } from '@/features/auth/types';
 
 export interface NightMember {
   id: string;
   consumer: Consumer;
   role: 'organiser' | 'member';
-  rsvp_status: 'going' | 'maybe' | 'declined';
+  rsvp_status: 'pending' | 'going' | 'maybe' | 'declined';
   created_at: string;
   updated_at: string;
 }
@@ -61,6 +61,7 @@ export interface Night {
   organiser: Consumer;
   members_count: number;
   itinerary_count: number;
+  current_user_rsvp: NightMember['rsvp_status'] | null;
   members: NightMember[];
   itinerary: Itinerary[];
   invites: NightInvite[];

@@ -42,32 +42,48 @@ const consumer = {
   updated_at: '2026-04-05T00:00:00.000Z',
 };
 
+const mockNight = {
+  id: 'night-1',
+  name: 'Friday Drinks',
+  date: '2026-04-20',
+  theme: null,
+  budget: null,
+  status: 'planning' as const,
+  organiser: { ...consumer, name: 'Alice' },
+  members_count: 3,
+  itinerary_count: 2,
+  current_user_rsvp: null,
+  members: [],
+  itinerary: [],
+  invites: [],
+  created_at: '2026-04-05T00:00:00.000Z',
+  updated_at: '2026-04-05T00:00:00.000Z',
+};
+
 beforeEach(() => {
   useNightsStore.setState({
     nights: [],
     currentNight: null,
     loading: false,
-    venues: [],
-    venuesLoading: false,
   });
   useAuthStore.setState({ consumer: null, token: null, isReady: true, pendingInviteCode: null });
   jest.clearAllMocks();
 });
 
 describe('InviteAcceptScreen', () => {
-  it('shows invite message', () => {
+  it('shows invite message when unauthenticated', () => {
     const { getByText } = render(<InviteAcceptScreen />);
     expect(getByText("You've been invited!")).toBeTruthy();
   });
 
   it('shows sign in button when unauthenticated', () => {
     const { getByText } = render(<InviteAcceptScreen />);
-    expect(getByText('Sign in to Join')).toBeTruthy();
+    expect(getByText('Sign in to Continue')).toBeTruthy();
   });
 
   it('stores pending invite code and redirects to login when unauthenticated', async () => {
     const { getByText } = render(<InviteAcceptScreen />);
-    fireEvent.press(getByText('Sign in to Join'));
+    fireEvent.press(getByText('Sign in to Continue'));
 
     await waitFor(() => {
       expect(useAuthStore.getState().pendingInviteCode).toBe('ABC123');
@@ -75,46 +91,76 @@ describe('InviteAcceptScreen', () => {
     });
   });
 
-  it('shows join button when authenticated', () => {
+  it('shows night details when authenticated and invite loads', async () => {
     useAuthStore.setState({ consumer, token: 'token' });
-    const { getByText } = render(<InviteAcceptScreen />);
-    expect(getByText('Join this Night')).toBeTruthy();
-  });
-
-  it('calls accept API and navigates to night on success', async () => {
-    useAuthStore.setState({ consumer, token: 'token' });
-    (mockApi.post as jest.Mock).mockResolvedValueOnce({
-      data: { message: 'Invite accepted', night_id: 'night-1' },
+    (mockApi.get as jest.Mock).mockResolvedValueOnce({
+      data: {
+        invite: { invited_by: { name: 'Alice' } },
+        night: mockNight,
+      },
     });
 
-    const { getByText } = render(<InviteAcceptScreen />);
+    const { findByText } = render(<InviteAcceptScreen />);
+    expect(await findByText('Friday Drinks')).toBeTruthy();
+  });
 
-    await waitFor(() => fireEvent.press(getByText('Join this Night')));
+  it('shows Join/Maybe/Decline buttons when authenticated', async () => {
+    useAuthStore.setState({ consumer, token: 'token' });
+    (mockApi.get as jest.Mock).mockResolvedValueOnce({
+      data: {
+        invite: { invited_by: { name: 'Alice' } },
+        night: mockNight,
+      },
+    });
+
+    const { findByText } = render(<InviteAcceptScreen />);
+    expect(await findByText('Join')).toBeTruthy();
+    expect(await findByText('Maybe')).toBeTruthy();
+    expect(await findByText('Decline')).toBeTruthy();
+  });
+
+  it('accepts invite and navigates on Join', async () => {
+    useAuthStore.setState({ consumer, token: 'token' });
+    (mockApi.get as jest.Mock).mockResolvedValueOnce({
+      data: {
+        invite: { invited_by: { name: 'Alice' } },
+        night: mockNight,
+      },
+    });
+    (mockApi.post as jest.Mock)
+      .mockResolvedValueOnce({ data: { night_id: 'night-1' } })
+      .mockResolvedValueOnce({ data: {} });
+
+    const { findByText } = render(<InviteAcceptScreen />);
+    const joinButton = await findByText('Join');
+    fireEvent.press(joinButton);
 
     await waitFor(() => {
       expect(mockApi.post).toHaveBeenCalledWith('/consumer/invites/ABC123/accept');
-    });
-
-    await waitFor(() => {
       expect(mockRouter.replace).toHaveBeenCalledWith('/(app)/nights/night-1');
     });
   });
 
-  it('shows error on failed accept', async () => {
+  it('shows error when invite details fail to load', async () => {
     useAuthStore.setState({ consumer, token: 'token' });
-    (mockApi.post as jest.Mock).mockRejectedValueOnce({
+    (mockApi.get as jest.Mock).mockRejectedValueOnce({
       response: { data: { message: 'Invite expired' } },
     });
 
-    const { getByText, findByText } = render(<InviteAcceptScreen />);
-    fireEvent.press(getByText('Join this Night'));
-
+    const { findByText } = render(<InviteAcceptScreen />);
     expect(await findByText('Invite expired')).toBeTruthy();
   });
 
-  it('shows go back button when authenticated', () => {
+  it('shows go back button when authenticated', async () => {
     useAuthStore.setState({ consumer, token: 'token' });
-    const { getByText } = render(<InviteAcceptScreen />);
-    expect(getByText('Go back')).toBeTruthy();
+    (mockApi.get as jest.Mock).mockResolvedValueOnce({
+      data: {
+        invite: { invited_by: { name: 'Alice' } },
+        night: mockNight,
+      },
+    });
+
+    const { findByText } = render(<InviteAcceptScreen />);
+    expect(await findByText('Go back')).toBeTruthy();
   });
 });
