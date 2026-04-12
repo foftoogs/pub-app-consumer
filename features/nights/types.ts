@@ -120,6 +120,17 @@ export interface SpendLimit {
   updated_at: string;
 }
 
+export interface NightGroupKey {
+  id: string;
+  night_id: string;
+  consumer_id: string;
+  key_pair_id: string;
+  wrapped_key: string;
+  key_version: number;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface CreateNightInput {
   name: string;
   date: string;

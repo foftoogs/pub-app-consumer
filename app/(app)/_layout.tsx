@@ -4,6 +4,7 @@ import { getFocusedRouteNameFromRoute } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 
 import { useThemeColors } from '@/hooks/use-theme-colors';
+import { usePushNotifications } from '@/hooks/use-push-notifications';
 import { useNightsStore } from '@/features/nights/store';
 import { Night } from '@/features/nights/types';
 
@@ -23,6 +24,7 @@ export default function AppLayout() {
   const colors = useThemeColors();
   const nights = useNightsStore((s) => s.nights);
   const showLive = useMemo(() => hasActiveNight(nights), [nights]);
+  usePushNotifications();
 
   return (
     <Tabs

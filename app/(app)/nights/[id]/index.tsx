@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Alert, StyleSheet, Text, View } from 'react-native';
 import { router } from 'expo-router';
 
@@ -13,7 +13,9 @@ export default function NightOverviewScreen() {
   const styles = useMemo(() => createStyles(colors), [colors]);
   const night = useNightsStore((s) => s.currentNight);
   const deleteNight = useNightsStore((s) => s.deleteNight);
+  const activateNight = useNightsStore((s) => s.activateNight);
   const consumer = useAuthStore((s) => s.consumer);
+  const [activating, setActivating] = useState(false);
 
   if (!night) return null;
 
@@ -31,6 +33,29 @@ export default function NightOverviewScreen() {
         },
       },
     ]);
+  };
+
+  const handleActivate = () => {
+    Alert.alert(
+      'Go Live',
+      'This will activate the night and enable encrypted live features for all members. Continue?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Go Live',
+          onPress: async () => {
+            setActivating(true);
+            try {
+              await activateNight(night.id);
+            } catch (err: any) {
+              Alert.alert('Activation Failed', err.message ?? 'Could not activate night.');
+            } finally {
+              setActivating(false);
+            }
+          },
+        },
+      ],
+    );
   };
 
   return (
@@ -60,11 +85,27 @@ export default function NightOverviewScreen() {
         <DetailRow label="Stops" value={String(night.itinerary_count)} styles={styles} />
       </View>
 
-      {isOrganiser && night.status === 'planning' && (
-        <View style={styles.actions}>
-          <Button label="Delete Night" variant="destructive" onPress={handleDelete} fullWidth />
+      {night.status === 'active' && (
+        <View style={styles.liveIndicator}>
+          <View style={[styles.liveDot, { backgroundColor: colors.live }]} />
+          <Text style={[styles.liveText, { color: colors.live }]}>Night is live</Text>
         </View>
       )}
+
+      <View style={styles.actions}>
+        {isOrganiser && night.status === 'planning' && (
+          <>
+            <Button
+              label={activating ? 'Activating...' : 'Go Live'}
+              variant="secondary"
+              onPress={handleActivate}
+              loading={activating}
+              fullWidth
+            />
+            <Button label="Delete Night" variant="destructive" onPress={handleDelete} fullWidth />
+          </>
+        )}
+      </View>
     </View>
   );
 }
@@ -121,8 +162,27 @@ function createStyles(colors: ThemeColors) {
       ...Typography.bodyMedium,
       color: colors.text,
     },
+    liveIndicator: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: Spacing.sm,
+      marginTop: Spacing.xl,
+      paddingVertical: Spacing.md,
+      paddingHorizontal: Spacing.base,
+      backgroundColor: colors.surfaceAlt,
+      borderRadius: Radius.md,
+    },
+    liveDot: {
+      width: 10,
+      height: 10,
+      borderRadius: 5,
+    },
+    liveText: {
+      ...Typography.bodyMedium,
+    },
     actions: {
       marginTop: Spacing['3xl'],
+      gap: Spacing.md,
     },
   });
 }
