@@ -80,7 +80,7 @@ export default function VerifyScreen() {
         <View style={[styles.content, { paddingTop: insets.top + Spacing['2xl'] }]}>
           {/* Logo + brand */}
           <View style={styles.brandSection}>
-            <NitePoolLogo size={56} color="#FFFFFF" />
+            <NitePoolLogo size={140} color="#FFFFFF" />
             <Text style={styles.brandName}>NITEPOOL</Text>
           </View>
 
@@ -160,13 +160,13 @@ const styles = StyleSheet.create({
   },
   brandSection: {
     alignItems: 'center',
-    marginBottom: Spacing['2xl'],
+    marginBottom: Spacing['3xl'],
   },
   brandName: {
     ...Typography.heading,
     color: '#FFFFFF',
     letterSpacing: 4,
-    marginTop: Spacing.sm,
+    marginTop: Spacing.md,
     fontWeight: '800',
   },
   card: {

@@ -1,5 +1,4 @@
 import axios from 'axios';
-import { useAuthStore } from '@/features/auth/store';
 
 const api = axios.create({
   baseURL: `${process.env.EXPO_PUBLIC_API_URL}/api/v1`,
@@ -10,6 +9,12 @@ const api = axios.create({
 });
 
 api.interceptors.request.use((config) => {
+  // Lazy require breaks the lib/api ↔ features/auth/store cycle. By the time
+  // any request fires, the auth store module has been initialised by the
+  // root layout, so this is safe.
+  const {
+    useAuthStore,
+  } = require('@/features/auth/store') as typeof import('@/features/auth/store');
   const token = useAuthStore.getState().token;
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
