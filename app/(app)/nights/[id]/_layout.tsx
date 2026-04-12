@@ -96,6 +96,15 @@ export default function NightDetailLayout() {
         }}
       />
       <Tabs.Screen
+        name="kitty"
+        options={{
+          title: 'Kitty',
+          tabBarIcon: ({ focused, color, size }) => (
+            <Ionicons name={focused ? 'wallet' : 'wallet-outline'} size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="invite"
         options={{
           title: 'Invite',
