@@ -116,7 +116,7 @@ describe('itinerary store actions', () => {
   it('fetchVenues passes search param', async () => {
     (mockApi.get as jest.Mock).mockResolvedValueOnce({ data: { data: [mockVenue] } });
 
-    await useVenuesStore.getState().fetchVenues('local');
+    await useVenuesStore.getState().fetchVenues({ search: 'local' });
 
     expect(mockApi.get).toHaveBeenCalledWith('/consumer/venues', { params: { search: 'local' } });
   });
